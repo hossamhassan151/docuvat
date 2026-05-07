@@ -524,18 +524,19 @@ export default function InvoiceBuilder({ initialType }: { initialType: "invoice"
         .single();
 
       if (company) {
-        setData((prev) => ({
-          ...prev,
-          companyName: company.name || "",
-          companyAddress: company.address || "",
-          companyCity: company.city || "",
-          companyCountry: company.country || "",
-          companyPhone: company.phone || "",
-          companyEmail: company.email || "",
-          companyWebsite: company.website || "",
-          companyTRN: company.trn || "",
-        }));
-      }
+  setData((prev) => ({
+    ...prev,
+    companyName: company.name || "",
+    companyAddress: company.address || "",
+    companyCity: company.city || "",
+    companyCountry: company.country || "",
+    companyPhone: company.phone || "",
+    companyEmail: company.email || "",
+    companyWebsite: company.website || "",
+    companyTRN: company.trn || "",
+    logoBase64: company.logo_url || prev.logoBase64,
+  }));
+}
 
       const { data: profile } = await supabase
         .from("profiles")
@@ -547,7 +548,9 @@ export default function InvoiceBuilder({ initialType }: { initialType: "invoice"
     };
 
     loadProfile();
+    
   }, []);
+  
 
   const set = useCallback(<K extends keyof InvoiceData>(key: K, value: InvoiceData[K]) => {
     setData((prev) => ({ ...prev, [key]: value }));
