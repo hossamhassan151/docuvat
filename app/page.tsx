@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FileText,
@@ -15,6 +16,42 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+
+function AuthButtons() {
+  const [loggedIn, setLoggedIn] = useState(false);
+  const supabase = createClient();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setLoggedIn(!!user);
+    });
+  }, []);
+
+  if (loggedIn) {
+    return (
+      <Link href="/dashboard">
+        <Button className="bg-gradient-to-r from-blue-500 to-emerald-500 hover:opacity-90 text-sm">
+          Dashboard
+        </Button>
+      </Link>
+    );
+  }
+
+  return (
+    <div className="flex gap-3">
+      <Link href="/login">
+        <Button variant="outline" className="border-white/20 bg-white/5 text-white hover:bg-white/10 text-sm">
+          Login
+        </Button>
+      </Link>
+      <Link href="/login">
+        <Button className="bg-gradient-to-r from-blue-500 to-emerald-500 hover:opacity-90 text-sm">
+          Get Started
+        </Button>
+      </Link>
+    </div>
+  );
+}
 
 // ─── Minimal live invoice preview ────────────────────────────────────────────
 
@@ -362,18 +399,7 @@ export default function HomePage() {
               <Link href="/pricing" className="text-sm text-slate-300 hover:text-white transition-colors">Pricing</Link>
             </nav>
 
-            <div className="flex gap-3">
-              <Link href="/dashboard">
-  <Button variant="outline" className="border-white/20 bg-white/5 text-white hover:bg-white/10 text-sm">
-    Dashboard
-  </Button>
-</Link>
-              <Link href="/pricing">
-                <Button className="bg-gradient-to-r from-blue-500 to-emerald-500 hover:opacity-90 text-sm">
-                  Get Started
-                </Button>
-              </Link>
-            </div>
+ <AuthButtons />
           </div>
         </header>
 
@@ -405,17 +431,17 @@ export default function HomePage() {
               </p>
 
               <div className="flex justify-center gap-4 mb-16">
-                <Link href="/pricing">
-                  <Button className="bg-gradient-to-r from-blue-500 to-emerald-500 hover:opacity-90 px-8 py-6 text-lg rounded-xl">
-                    Start Free <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
-                <Link href="/invoice">
-                  <Button variant="outline" className="border-white/20 bg-white/5 text-white hover:bg-white/10 px-8 py-6 text-lg rounded-xl">
-                    Try Demo
-                  </Button>
-                </Link>
-              </div>
+  <Link href="/invoice">
+    <Button className="bg-gradient-to-r from-blue-500 to-emerald-500 hover:opacity-90 px-8 py-6 text-lg rounded-xl">
+      Try Free Invoice <ArrowRight className="ml-2 h-5 w-5" />
+    </Button>
+  </Link>
+  <Link href="/pricing">
+    <Button variant="outline" className="border-white/20 bg-white/5 text-white hover:bg-white/10 px-8 py-6 text-lg rounded-xl">
+      View Pricing
+    </Button>
+  </Link>
+</div>
 
               {/* Live carousel */}
               <InvoiceCarousel />
@@ -496,7 +522,7 @@ export default function HomePage() {
         {/* ── FOOTER ── */}
         <footer className="border-t border-white/10 py-8">
           <div className="mx-auto max-w-7xl px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-400">
-            <div>© 2026 DOCUVAT. All rights reserved.</div>
+            <div>© 2025 DOCUVAT. All rights reserved.</div>
             <div className="flex gap-6">
               <Link href="/about" className="hover:text-white transition-colors">About</Link>
               <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>

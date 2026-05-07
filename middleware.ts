@@ -29,7 +29,7 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   // لو مش logged in وبيحاول يدخل صفحة محمية
-  const protectedRoutes = ["/invoice", "/quotation", "/lpo", "/dashboard", "/admin"];
+  const protectedRoutes = ["/dashboard", "/admin"];
   const isProtected = protectedRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route)
   );

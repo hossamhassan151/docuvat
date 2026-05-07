@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
-import { useEffect } from "react";
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type DocType = "invoice" | "quotation" | "lpo";
@@ -80,7 +81,7 @@ interface DocConfig {
   numberLabel: string; numberPrefix: string;
   dueDateLabel: string;
   fromLabel: string; fromLabelAr: string;
-  toLabel: string;   toLabelAr: string;
+  toLabel: string; toLabelAr: string;
   footerNote: string;
   showBank: boolean; showTRN: boolean; vatOptional: boolean;
 }
@@ -91,7 +92,7 @@ const DOC_CONFIG: Record<DocType, DocConfig> = {
     numberLabel: "Invoice No.", numberPrefix: "INV",
     dueDateLabel: "Due Date",
     fromLabel: "Billed By", fromLabelAr: "من",
-    toLabel: "Billed To",   toLabelAr: "إلى",
+    toLabel: "Billed To", toLabelAr: "إلى",
     footerNote: "This is an official UAE VAT Tax Invoice pursuant to Federal Decree-Law No. (8) of 2017 — فاتورة ضريبية رسمية",
     showBank: true, showTRN: true, vatOptional: false,
   },
@@ -100,7 +101,7 @@ const DOC_CONFIG: Record<DocType, DocConfig> = {
     numberLabel: "Quote No.", numberPrefix: "QT",
     dueDateLabel: "Valid Until",
     fromLabel: "Prepared By", fromLabelAr: "معد من",
-    toLabel: "Prepared For",  toLabelAr: "مقدم إلى",
+    toLabel: "Prepared For", toLabelAr: "مقدم إلى",
     footerNote: "This is a quotation only and not a tax invoice. Prices are subject to change after the validity date.",
     showBank: false, showTRN: false, vatOptional: true,
   },
@@ -109,7 +110,7 @@ const DOC_CONFIG: Record<DocType, DocConfig> = {
     numberLabel: "PO Number", numberPrefix: "PO",
     dueDateLabel: "Delivery Date",
     fromLabel: "Issued By", fromLabelAr: "صادر من",
-    toLabel: "Vendor",      toLabelAr: "المورد",
+    toLabel: "Vendor", toLabelAr: "المورد",
     footerNote: "This Purchase Order is subject to agreed terms and conditions between both parties.",
     showBank: false, showTRN: true, vatOptional: false,
   },
@@ -149,7 +150,7 @@ const defaultData: InvoiceData = {
   companyName: "", companyAddress: "", companyCity: "", companyCountry: "United Arab Emirates",
   companyPhone: "", companyEmail: "", companyWebsite: "", companyTRN: "", logoBase64: null,
   clientName: "", clientAddress: "", clientCity: "", clientTRN: "",
-  docNumber: "INV-2026-001", docDate: new Date().toISOString().split("T")[0], dueDate: "",
+  docNumber: "INV-2025-001", docDate: new Date().toISOString().split("T")[0], dueDate: "",
   currency: "AED", enableVat: true, vatRate: 5,
   notes: "Payment is due within 30 days of invoice date.\nPlease include invoice number in your payment reference.",
   bankName: "", iban: "", swift: "",
@@ -231,12 +232,10 @@ function SignatureBlock({ accentColor }: { accentColor: string }) {
   );
 }
 
-// ─── Cards helper ─────────────────────────────────────────────────────────────
-
 interface CardData { t: string; name: string; addr: string; extra?: string; trn: string; }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// TEMPLATE 1 — Top gradient bar, side-border cards
+// TEMPLATE 1
 // ══════════════════════════════════════════════════════════════════════════════
 
 function Template1({ data }: { data: InvoiceData }) {
@@ -244,16 +243,13 @@ function Template1({ data }: { data: InvoiceData }) {
   const cfg = DOC_CONFIG[data.docType];
   const cs = COLOR_SCHEMES[1][data.colorScheme] ?? COLOR_SCHEMES[1].navy;
   const { primary: P, accent: A, light: L, headerText: HT } = cs;
-
   const cards: CardData[] = [
     { t: `${cfg.fromLabel} — ${cfg.fromLabelAr}`, name: data.companyName, addr: data.companyAddress + (data.companyCity ? `, ${data.companyCity}` : ""), extra: data.companyCountry, trn: cfg.showTRN ? data.companyTRN : "" },
     { t: `${cfg.toLabel} — ${cfg.toLabelAr}`, name: data.clientName, addr: data.clientAddress, extra: data.clientCity, trn: cfg.showTRN ? data.clientTRN : "" },
   ];
-
   return (
     <div style={{ background: "white", fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 13 }}>
       <div style={{ height: 5, background: `linear-gradient(90deg, ${P}, ${A})` }} />
-
       <div style={{ padding: "32px 48px 24px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
           {data.logoBase64 && <img src={data.logoBase64} alt="logo" style={{ maxHeight: 52, maxWidth: 160, objectFit: "contain", display: "block", marginBottom: 12 }} />}
@@ -272,20 +268,16 @@ function Template1({ data }: { data: InvoiceData }) {
           {data.dueDate && <div style={{ fontSize: 11, color: "#888" }}>{cfg.dueDateLabel}: {formatDate(data.dueDate)}</div>}
         </div>
       </div>
-
       <div style={{ padding: "0 48px 20px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         {cards.map((c) => (
           <div key={c.t} style={{ background: L, borderRadius: 10, padding: "16px 20px", borderLeft: `3px solid ${A}` }}>
             <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: 2, color: A, fontWeight: 700, marginBottom: 8 }}>{c.t}</div>
             <div style={{ fontWeight: 700, fontSize: 14, color: P }}>{c.name || "—"}</div>
-            <div style={{ fontSize: 12, color: "#555", lineHeight: 1.7, marginTop: 4 }}>
-              {c.addr}{c.extra ? <><br />{c.extra}</> : ""}
-            </div>
+            <div style={{ fontSize: 12, color: "#555", lineHeight: 1.7, marginTop: 4 }}>{c.addr}{c.extra ? <><br />{c.extra}</> : ""}</div>
             {c.trn && <div style={{ marginTop: 8, fontSize: 10, color: A, fontWeight: 600 }}>TRN: <span style={{ fontFamily: "monospace" }}>{c.trn}</span></div>}
           </div>
         ))}
       </div>
-
       <div style={{ padding: "0 48px" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
@@ -308,7 +300,6 @@ function Template1({ data }: { data: InvoiceData }) {
           </tbody>
         </table>
       </div>
-
       <TotalsBlock data={data} {...calc} primaryBg={P} accentText={HT} lightBg={L} borderColor="#dde4f0" />
       {cfg.showBank && <BankBlock data={data} borderColor={L} labelColor={P} />}
       <NotesBlock data={data} borderColor="#e5e7eb" />
@@ -319,7 +310,7 @@ function Template1({ data }: { data: InvoiceData }) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// TEMPLATE 2 — Bold bottom-border header, accent-left cards
+// TEMPLATE 2
 // ══════════════════════════════════════════════════════════════════════════════
 
 function Template2({ data }: { data: InvoiceData }) {
@@ -327,12 +318,10 @@ function Template2({ data }: { data: InvoiceData }) {
   const cfg = DOC_CONFIG[data.docType];
   const cs = COLOR_SCHEMES[2][data.colorScheme] ?? COLOR_SCHEMES[2].red;
   const { primary: P, accent: A } = cs;
-
   const cards: CardData[] = [
     { t: `${cfg.fromLabel} — ${cfg.fromLabelAr}`, name: data.companyName, addr: data.companyAddress + (data.companyCity ? `, ${data.companyCity}` : ""), extra: data.companyCountry, trn: cfg.showTRN ? data.companyTRN : "" },
     { t: `${cfg.toLabel} — ${cfg.toLabelAr}`, name: data.clientName, addr: data.clientAddress, extra: data.clientCity, trn: cfg.showTRN ? data.clientTRN : "" },
   ];
-
   return (
     <div style={{ background: "white", fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 13 }}>
       <div style={{ padding: "36px 48px 24px", borderBottom: `3px solid ${P}`, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
@@ -350,20 +339,16 @@ function Template2({ data }: { data: InvoiceData }) {
           {data.dueDate && <div style={{ fontSize: 11, color: "#95a5a6" }}>{cfg.dueDateLabel}: {formatDate(data.dueDate)}</div>}
         </div>
       </div>
-
       <div style={{ padding: "20px 48px 0", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         {cards.map((c) => (
           <div key={c.t} style={{ background: "#f8f9fa", borderRadius: 12, padding: "16px 20px", borderLeft: `4px solid ${A}` }}>
             <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: 2, color: A, fontWeight: 700, marginBottom: 8 }}>{c.t}</div>
             <div style={{ fontSize: 14, fontWeight: 700, color: P }}>{c.name || "—"}</div>
-            <div style={{ fontSize: 12, color: "#666", lineHeight: 1.7, marginTop: 4 }}>
-              {c.addr}{c.extra ? <><br />{c.extra}</> : ""}
-            </div>
+            <div style={{ fontSize: 12, color: "#666", lineHeight: 1.7, marginTop: 4 }}>{c.addr}{c.extra ? <><br />{c.extra}</> : ""}</div>
             {c.trn && <div style={{ marginTop: 10, fontSize: 10, color: A, fontWeight: 600 }}>TRN: <span style={{ fontFamily: "monospace" }}>{c.trn}</span></div>}
           </div>
         ))}
       </div>
-
       <div style={{ padding: "20px 48px 0" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
@@ -386,7 +371,6 @@ function Template2({ data }: { data: InvoiceData }) {
           </tbody>
         </table>
       </div>
-
       <TotalsBlock data={data} {...calc} primaryBg={A} accentText="white" lightBg="#f8f9fa" borderColor="#ecf0f1" />
       {cfg.showBank && <BankBlock data={data} borderColor="#ecf0f1" labelColor={P} />}
       <NotesBlock data={data} borderColor="#ecf0f1" />
@@ -397,7 +381,7 @@ function Template2({ data }: { data: InvoiceData }) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// TEMPLATE 3 — Gradient stripe top+bottom, dark table header
+// TEMPLATE 3
 // ══════════════════════════════════════════════════════════════════════════════
 
 function Template3({ data }: { data: InvoiceData }) {
@@ -405,16 +389,13 @@ function Template3({ data }: { data: InvoiceData }) {
   const cfg = DOC_CONFIG[data.docType];
   const cs = COLOR_SCHEMES[3][data.colorScheme] ?? COLOR_SCHEMES[3].green;
   const { primary: P, accent: G, light: L } = cs;
-
   const cards: CardData[] = [
     { t: `${cfg.fromLabel} — ${cfg.fromLabelAr}`, name: data.companyName, addr: `${data.companyAddress}\n${data.companyCity}${data.companyCountry ? `, ${data.companyCountry}` : ""}`, trn: cfg.showTRN ? data.companyTRN : "" },
     { t: `${cfg.toLabel} — ${cfg.toLabelAr}`, name: data.clientName, addr: `${data.clientAddress}\n${data.clientCity}`, trn: cfg.showTRN ? data.clientTRN : "" },
   ];
-
   return (
     <div style={{ background: "white", fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 13 }}>
       <div style={{ height: 8, background: `linear-gradient(90deg, ${P}, ${G}, ${P})` }} />
-
       <div style={{ padding: "28px 48px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           {data.logoBase64 && <img src={data.logoBase64} alt="logo" style={{ maxHeight: 48, maxWidth: 150, objectFit: "contain", display: "block", marginBottom: 10 }} />}
@@ -431,7 +412,6 @@ function Template3({ data }: { data: InvoiceData }) {
           {data.dueDate && <div style={{ fontSize: 11, color: "#888" }}>{cfg.dueDateLabel}: {formatDate(data.dueDate)}</div>}
         </div>
       </div>
-
       <div style={{ padding: "0 48px 20px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         {cards.map((c) => (
           <div key={c.t} style={{ padding: "16px 18px", border: `0.5px solid ${G}55`, borderRadius: 10 }}>
@@ -442,7 +422,6 @@ function Template3({ data }: { data: InvoiceData }) {
           </div>
         ))}
       </div>
-
       <div style={{ padding: "0 48px" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
@@ -465,7 +444,6 @@ function Template3({ data }: { data: InvoiceData }) {
           </tbody>
         </table>
       </div>
-
       <TotalsBlock data={data} {...calc} primaryBg={P} accentText={G} lightBg={L} borderColor={L} />
       {cfg.showBank && <BankBlock data={data} borderColor={`${G}44`} labelColor={P} />}
       <NotesBlock data={data} borderColor={`${G}44`} />
@@ -524,52 +502,53 @@ const DOC_TYPES: { id: DocType; label: string; icon: string }[] = [
 // ══════════════════════════════════════════════════════════════════════════════
 
 export default function InvoiceBuilder({ initialType }: { initialType: "invoice" | "quotation" | "lpo" }) {
-  const [data, setData] = useState<InvoiceData>({
-  ...defaultData,
-  docType: initialType,
-});
-  const printRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
   const supabase = createClient();
+
+  const [data, setData] = useState<InvoiceData>({
+    ...defaultData,
+    docType: initialType,
+  });
+  const printRef = useRef<HTMLDivElement>(null);
   const [plan, setPlan] = useState<"free" | "pro">("free");
-  const [limitReached, setLimitReached] = useState(false);  
+
   useEffect(() => {
-  const loadProfile = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const loadProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    const { data: company } = await supabase
-      .from("companies")
-      .select("*")
-      .eq("user_id", user.id)
-      .single();
+      const { data: company } = await supabase
+        .from("companies")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
 
-    if (company) {
-      setData((prev) => ({
-        ...prev,
-        companyName: company.name || "",
-        companyAddress: company.address || "",
-        companyCity: company.city || "",
-        companyCountry: company.country || "",
-        companyPhone: company.phone || "",
-        companyEmail: company.email || "",
-        companyWebsite: company.website || "",
-        companyTRN: company.trn || "",
-      }));
-    }
+      if (company) {
+        setData((prev) => ({
+          ...prev,
+          companyName: company.name || "",
+          companyAddress: company.address || "",
+          companyCity: company.city || "",
+          companyCountry: company.country || "",
+          companyPhone: company.phone || "",
+          companyEmail: company.email || "",
+          companyWebsite: company.website || "",
+          companyTRN: company.trn || "",
+        }));
+      }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("plan")
-      .eq("id", user.id)
-      .single();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("plan")
+        .eq("id", user.id)
+        .single();
 
-    if (profile) {
-      setPlan(profile.plan);
-    }
-  };
+      if (profile) setPlan(profile.plan);
+    };
 
-  loadProfile();
-}, []);
+    loadProfile();
+  }, []);
+
   const set = useCallback(<K extends keyof InvoiceData>(key: K, value: InvoiceData[K]) => {
     setData((prev) => ({ ...prev, [key]: value }));
   }, []);
@@ -584,7 +563,7 @@ export default function InvoiceBuilder({ initialType }: { initialType: "invoice"
     setData((prev) => ({
       ...prev,
       docType: dt,
-      docNumber: `${cfg.numberPrefix}-2026-001`,
+      docNumber: `${cfg.numberPrefix}-2025-001`,
       dueDate: "",
       enableVat: dt !== "quotation",
       notes: notesMap[dt],
@@ -600,7 +579,7 @@ export default function InvoiceBuilder({ initialType }: { initialType: "invoice"
     setData((prev) => ({ ...prev, items: prev.items.map((item) => item.id === id ? { ...item, [field]: value } : item) }));
   }, []);
 
-  const addItem    = () => setData((prev) => ({ ...prev, items: [...prev.items, { id: generateId(), description: "", qty: 1, unitPrice: 0 }] }));
+  const addItem = () => setData((prev) => ({ ...prev, items: [...prev.items, { id: generateId(), description: "", qty: 1, unitPrice: 0 }] }));
   const removeItem = (id: string) => setData((prev) => ({ ...prev, items: prev.items.filter((i) => i.id !== id) }));
 
   const handleLogo = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -610,52 +589,54 @@ export default function InvoiceBuilder({ initialType }: { initialType: "invoice"
     reader.readAsDataURL(file);
   };
 
- const handlePrint = async () => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+  const handlePrint = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.push("/login");
+      return;
+    }
 
-if (plan === "free") {
-  const today = new Date().toISOString().split("T")[0];
+    if (plan === "free") {
+      const today = new Date().toISOString().split("T")[0];
+      const { count } = await supabase
+        .from("documents")
+        .select("id", { count: "exact" })
+        .eq("user_id", user.id)
+        .gte("created_at", today);
 
-  const { count } = await supabase
-    .from("documents")
-    .select("id", { count: "exact" })
-    .eq("user_id", user.id)
-    .gte("created_at", today);
+      if (count && count >= 1) {
+        alert("You have reached your daily limit. Upgrade to Pro for unlimited documents.");
+        return;
+      }
+    }
 
- if (count && count >= 1) {
-  alert("You have reached your daily limit. Upgrade to Pro for unlimited documents.");
-  return;
-}
-}
+    await supabase.from("documents").insert({
+      user_id: user.id,
+      doc_type: data.docType,
+      doc_number: data.docNumber,
+      doc_date: data.docDate,
+      total: data.items.reduce((s, i) => s + i.qty * i.unitPrice, 0),
+    });
 
-  await supabase.from("documents").insert({
-    user_id: user.id,
-    doc_type: data.docType,
-    doc_number: data.docNumber,
-    doc_date: data.docDate,
-    total: data.items.reduce((s, i) => s + i.qty * i.unitPrice, 0),
-  });
-
-  const content = printRef.current?.innerHTML;
-  if (!content) return;
-  const win = window.open("", "_blank");
-  if (!win) return;
-  win.document.write(`<!DOCTYPE html><html><head><title>${data.docNumber}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{margin:0;size:A4}</style></head><body>${content}</body></html>`);
-  win.document.close();
-  win.focus();
-  setTimeout(() => { win.print(); win.close(); }, 300);
-};
+    const content = printRef.current?.innerHTML;
+    if (!content) return;
+    const win = window.open("", "_blank");
+    if (!win) return;
+    win.document.write(`<!DOCTYPE html><html><head><title>${data.docNumber}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{margin:0;size:A4}</style></head><body>${content}</body></html>`);
+    win.document.close();
+    win.focus();
+    setTimeout(() => { win.print(); win.close(); }, 300);
+    router.push("/dashboard");
+  };
 
   const TemplateComponent = data.template === 1 ? Template1 : data.template === 2 ? Template2 : Template3;
-  
   const cfg = DOC_CONFIG[data.docType];
   const schemes = COLOR_SCHEMES[data.template];
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
 
-      {/* ═══ SIDEBAR ═══ */}
+      {/* SIDEBAR */}
       <aside className="w-[320px] min-w-[320px] bg-white border-r border-gray-100 flex flex-col overflow-hidden shadow-sm">
         <div className="px-5 pt-5 pb-3 border-b border-gray-100">
           <div className="text-base font-bold text-gray-900">Document Builder</div>
@@ -664,7 +645,6 @@ if (plan === "free") {
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
 
-          {/* Document Type */}
           <Section title="Document Type">
             <div className="grid grid-cols-3 gap-2">
               {DOC_TYPES.map((dt) => (
@@ -679,7 +659,6 @@ if (plan === "free") {
             </div>
           </Section>
 
-          {/* Design */}
           <Section title="Design">
             <div className="grid grid-cols-3 gap-2">
               {TEMPLATES.map((t) => (
@@ -708,7 +687,6 @@ if (plan === "free") {
             </div>
           </Section>
 
-          {/* Company */}
           <Section title="Company Info">
             <div className="border-2 border-dashed border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-blue-300 transition-colors"
               onClick={() => document.getElementById("logoUpload")?.click()}>
@@ -727,7 +705,6 @@ if (plan === "free") {
             <Field label="Website" value={data.companyWebsite} onChange={(v) => set("companyWebsite", v)} placeholder="www.company.ae" />
           </Section>
 
-          {/* Client / Vendor */}
           <Section title={data.docType === "lpo" ? "Vendor Info" : "Client Info"}>
             <Field label={`${cfg.toLabel} Name *`} value={data.clientName} onChange={(v) => set("clientName", v)} placeholder="Name" />
             <Field label="Address" value={data.clientAddress} onChange={(v) => set("clientAddress", v)} placeholder="Address" />
@@ -735,9 +712,8 @@ if (plan === "free") {
             {cfg.showTRN && <Field label="TRN" value={data.clientTRN} onChange={(v) => set("clientTRN", v)} placeholder="TRN (if applicable)" />}
           </Section>
 
-          {/* Document Details */}
           <Section title="Document Details">
-            <Field label={cfg.numberLabel} value={data.docNumber} onChange={(v) => set("docNumber", v)} placeholder={`${cfg.numberPrefix}-2026-001`} />
+            <Field label={cfg.numberLabel} value={data.docNumber} onChange={(v) => set("docNumber", v)} placeholder={`${cfg.numberPrefix}-2025-001`} />
             <div className="grid grid-cols-2 gap-2">
               <Field label="Date" value={data.docDate} onChange={(v) => set("docDate", v)} type="date" />
               <Field label={cfg.dueDateLabel} value={data.dueDate} onChange={(v) => set("dueDate", v)} type="date" />
@@ -774,7 +750,6 @@ if (plan === "free") {
             )}
           </Section>
 
-          {/* Line Items */}
           <Section title="Line Items">
             <div className="space-y-2">
               {data.items.map((item) => (
@@ -808,7 +783,6 @@ if (plan === "free") {
             </button>
           </Section>
 
-          {/* Bank — invoice only */}
           {cfg.showBank && (
             <Section title="Bank Details (Optional)">
               <Field label="Bank Name" value={data.bankName} onChange={(v) => set("bankName", v)} placeholder="Emirates NBD" />
@@ -817,7 +791,6 @@ if (plan === "free") {
             </Section>
           )}
 
-          {/* Notes */}
           <Section title="Notes">
             <div>
               <label className={labelCls}>Notes / Terms</label>
@@ -828,19 +801,13 @@ if (plan === "free") {
 
         </div>
 
-<div className="p-4 border-t border-gray-100">
-
+        <div className="p-4 border-t border-gray-100">
           <button
             onClick={async () => {
               const { data: { user } } = await supabase.auth.getUser();
               if (!user) return;
-
               const { data: existing } = await supabase
-                .from("companies")
-                .select("id")
-                .eq("user_id", user.id)
-                .single();
-
+                .from("companies").select("id").eq("user_id", user.id).single();
               const companyData = {
                 user_id: user.id,
                 name: data.companyName,
@@ -852,27 +819,23 @@ if (plan === "free") {
                 website: data.companyWebsite,
                 trn: data.companyTRN,
               };
-
               if (existing) {
                 await supabase.from("companies").update(companyData).eq("id", existing.id);
               } else {
                 await supabase.from("companies").insert(companyData);
               }
-
-              // بعد الحفظ املي البيانات تاني
-setData((prev) => ({
-  ...prev,
-  companyName: companyData.name || "",
-  companyAddress: companyData.address || "",
-  companyCity: companyData.city || "",
-  companyCountry: companyData.country || "",
-  companyPhone: companyData.phone || "",
-  companyEmail: companyData.email || "",
-  companyWebsite: companyData.website || "",
-  companyTRN: companyData.trn || "",
-}));
-
-alert("✅ Company profile saved!");
+              setData((prev) => ({
+                ...prev,
+                companyName: companyData.name || "",
+                companyAddress: companyData.address || "",
+                companyCity: companyData.city || "",
+                companyCountry: companyData.country || "",
+                companyPhone: companyData.phone || "",
+                companyEmail: companyData.email || "",
+                companyWebsite: companyData.website || "",
+                companyTRN: companyData.trn || "",
+              }));
+              alert("Company profile saved!");
             }}
             className="w-full py-2.5 mb-2 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-100 transition-all"
           >
@@ -885,11 +848,10 @@ alert("✅ Company profile saved!");
           >
             🖨 Export / Print PDF
           </button>
-
         </div>
       </aside>
 
-      {/* ═══ PREVIEW ═══ */}
+      {/* PREVIEW */}
       <main className="flex-1 overflow-y-auto bg-gray-100 p-6">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center justify-between mb-4">
