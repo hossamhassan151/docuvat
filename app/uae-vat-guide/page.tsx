@@ -1,36 +1,16 @@
-export default function sitemap() {
-  const baseUrl = 'https://www.docuvat.com';
-  
-  return [
-    {
-      url: baseUrl,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 1,
-    },
-    {
-      url: `${baseUrl}/free-invoice-generator`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/quotation-generator`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/lpo-generator`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/uae-vat-guide`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-  ];
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: "UAE VAT Guide 2026 | DOCUVAT",
+  description: "Complete guide to UAE VAT for small businesses.",
+};
+
+export default function VatGuidePage() {
+  return (
+    <div className="min-h-screen bg-white text-slate-900 p-10">
+      <h1 className="text-4xl font-bold">Understanding UAE VAT</h1>
+      <p className="mt-4">The 5% VAT rate in the UAE applies to...</p>
+      {/* باقي محتوى الصفحة هنا */}
+    </div>
+  );
 }
