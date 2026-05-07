@@ -17,13 +17,19 @@ export const metadata: Metadata = {
   title: "DocuVat | أفضل برنامج فواتير ضريبية في الإمارات - UAE VAT Invoices",
   description: "منصة DocuVat لإنشاء الفواتير الضريبية، عروض الأسعار، وأوامر الشراء (LPO) في ثوانٍ. متوافق تماماً مع متطلبات الهيئة الاتحادية للضرائب في الإمارات.",
   
-  // --- إضافة الأيقونة هنا ---
+  // --- التصحيح الشامل للأيقونة لضمان ظهورها في جوجل ---
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "32x32" },
+      { url: "/icon-48.png", type: "image/png", sizes: "48x48" }, // جوجل بيحب مقاس 48 جداً
+    ],
     shortcut: "/favicon.ico",
-    apple: "/favicon.ico",
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
-  // -----------------------
+  // -----------------------------------------------
 
   verification: {
     google: "umyfjUxWImXA-orSKhqwxgjYctDSmYq_fNs6k6nDGSc",
@@ -46,7 +52,8 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="ar" // نصيحة: بما إن العنوان والوصف بالعربي، يفضل تخليها ar
+      lang="ar"
+      dir="rtl" // ضفت لك دي عشان المواقع العربي تكون مضبوطة من اليمين للشمال
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
