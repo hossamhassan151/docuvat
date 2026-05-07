@@ -248,7 +248,15 @@ function Template1({ data }: { data: InvoiceData }) {
     { t: `${cfg.toLabel} — ${cfg.toLabelAr}`, name: data.clientName, addr: data.clientAddress, extra: data.clientCity, trn: cfg.showTRN ? data.clientTRN : "" },
   ];
   return (
-    <div style={{ background: "white", fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 13 }}>
+    <div style={{
+  background: "white",
+  fontFamily: "'Segoe UI', system-ui, sans-serif",
+  fontSize: 13,
+  minHeight: "297mm",
+  width: "210mm",
+  display: "flex",
+  flexDirection: "column",
+}}>
       <div style={{ height: 5, background: `linear-gradient(90deg, ${P}, ${A})` }} />
       <div style={{ padding: "32px 48px 24px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
@@ -304,7 +312,7 @@ function Template1({ data }: { data: InvoiceData }) {
       {cfg.showBank && <BankBlock data={data} borderColor={L} labelColor={P} />}
       <NotesBlock data={data} borderColor="#e5e7eb" />
       <SignatureBlock accentColor={A} />
-      <div style={{ background: P, color: HT, padding: "12px 48px", fontSize: 10 }}>{cfg.footerNote}</div>
+      <div style={{ marginTop: "auto", background: P, color: HT, padding: "12px 48px", fontSize: 10 }}>{cfg.footerNote}</div>
     </div>
   );
 }
@@ -323,7 +331,15 @@ function Template2({ data }: { data: InvoiceData }) {
     { t: `${cfg.toLabel} — ${cfg.toLabelAr}`, name: data.clientName, addr: data.clientAddress, extra: data.clientCity, trn: cfg.showTRN ? data.clientTRN : "" },
   ];
   return (
-    <div style={{ background: "white", fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 13 }}>
+    <div style={{
+  background: "white",
+  fontFamily: "'Segoe UI', system-ui, sans-serif",
+  fontSize: 13,
+  minHeight: "297mm",
+  width: "210mm",
+  display: "flex",
+  flexDirection: "column",
+}}>
       <div style={{ padding: "36px 48px 24px", borderBottom: `3px solid ${P}`, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
         <div>
           {data.logoBase64 && <img src={data.logoBase64} alt="logo" style={{ maxHeight: 48, maxWidth: 160, objectFit: "contain", display: "block", marginBottom: 10 }} />}
@@ -375,7 +391,7 @@ function Template2({ data }: { data: InvoiceData }) {
       {cfg.showBank && <BankBlock data={data} borderColor="#ecf0f1" labelColor={P} />}
       <NotesBlock data={data} borderColor="#ecf0f1" />
       <SignatureBlock accentColor={A} />
-      <div style={{ borderTop: "0.5px solid #ecf0f1", padding: "12px 48px", fontSize: 10, color: "#bbb" }}>{cfg.footerNote}</div>
+      <div style={{ marginTop: "auto", borderTop: "0.5px solid #ecf0f1", padding: "12px 48px", fontSize: 10, color: "#bbb" }}>{cfg.footerNote}</div>
     </div>
   );
 }
@@ -394,7 +410,15 @@ function Template3({ data }: { data: InvoiceData }) {
     { t: `${cfg.toLabel} — ${cfg.toLabelAr}`, name: data.clientName, addr: `${data.clientAddress}\n${data.clientCity}`, trn: cfg.showTRN ? data.clientTRN : "" },
   ];
   return (
-    <div style={{ background: "white", fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 13 }}>
+    <div style={{
+  background: "white",
+  fontFamily: "'Segoe UI', system-ui, sans-serif",
+  fontSize: 13,
+  minHeight: "297mm",
+  width: "210mm",
+  display: "flex",
+  flexDirection: "column",
+}}>
       <div style={{ height: 8, background: `linear-gradient(90deg, ${P}, ${G}, ${P})` }} />
       <div style={{ padding: "28px 48px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
@@ -448,7 +472,7 @@ function Template3({ data }: { data: InvoiceData }) {
       {cfg.showBank && <BankBlock data={data} borderColor={`${G}44`} labelColor={P} />}
       <NotesBlock data={data} borderColor={`${G}44`} />
       <SignatureBlock accentColor={P} />
-      <div style={{ borderTop: `2px solid ${P}`, padding: "12px 48px", fontSize: 10, color: "#aaa" }}>{cfg.footerNote}</div>
+      <div style={{ marginTop: "auto", borderTop: `2px solid ${P}`, padding: "12px 48px", fontSize: 10, color: "#aaa" }}>{cfg.footerNote}</div>
       <div style={{ height: 6, background: `linear-gradient(90deg, ${G}, ${P}, ${G})` }} />
     </div>
   );

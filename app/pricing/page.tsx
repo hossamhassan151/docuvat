@@ -31,7 +31,7 @@ const PRO_FEATURES = [
   { text: "New templates as released", included: true },
 ];
 
-const WHATSAPP_NUMBER = "971XXXXXXXXX"; // ← غير ده برقمك
+const WHATSAPP_NUMBER = "971505348284"; // ← غير ده برقمك
 
 function Header() {
   return (

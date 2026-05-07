@@ -16,7 +16,15 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "DocuVat | أفضل برنامج فواتير ضريبية في الإمارات - UAE VAT Invoices",
   description: "منصة DocuVat لإنشاء الفواتير الضريبية، عروض الأسعار، وأوامر الشراء (LPO) في ثوانٍ. متوافق تماماً مع متطلبات الهيئة الاتحادية للضرائب في الإمارات.",
-  // السطر اللي تحت ده هو اللي هيخلي جوجل يثبت ملكيتك فوراً
+  
+  // --- إضافة الأيقونة هنا ---
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/favicon.ico",
+  },
+  // -----------------------
+
   verification: {
     google: "umyfjUxWImXA-orSKhqwxgjYctDSmYq_fNs6k6nDGSc",
   },
@@ -38,36 +46,37 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="ar" // نصيحة: بما إن العنوان والوصف بالعربي، يفضل تخليها ar
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-  {children}
+        {children}
 
-  <Script
-    src="https://www.googletagmanager.com/gtag/js?id=G-HNE73B20HF"
-    strategy="afterInteractive"
-  />
+        {/* Google Analytics */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-HNE73B20HF"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-HNE73B20HF');
+          `}
+        </Script>
 
-  <Script id="google-analytics" strategy="afterInteractive">
-    {`
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-HNE73B20HF');
-    `}
-  </Script>
-  <Script id="clarity" strategy="afterInteractive">
-  {`
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "wne0jag5do");
-  `}
-</Script>
-</body>
+        {/* Microsoft Clarity */}
+        <Script id="clarity" strategy="afterInteractive">
+          {`
+            (function(c,l,a,r,i,t,y){
+                c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+            })(window, document, "clarity", "script", "wne0jag5do");
+          `}
+        </Script>
+      </body>
     </html>
   );
 }

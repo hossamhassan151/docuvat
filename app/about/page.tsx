@@ -14,8 +14,8 @@ import {
 import { Button } from "@/components/ui/button";
 
 // --- الإعدادات (تأكد من تعديلها) ---
-const WHATSAPP_NUMBER = "971501234567"; // رقمك بدون أصفار أو علامة +
-const WHATSAPP_DISPLAY = "+971 50 123 4567"; 
+const WHATSAPP_NUMBER = "971505348284"; // رقمك بدون أصفار أو علامة +
+const WHATSAPP_DISPLAY = "+971 50 534 8284"; 
 const SUPPORT_EMAIL = "support@docuvat.com";
 
 function Header() {

@@ -130,7 +130,7 @@ function LiveInvoicePreview({ theme }: { theme: typeof THEMES[0] }) {
           <div style={{ color: "#888", marginTop: 2, lineHeight: 1.6 }}>
             Dubai, United Arab Emirates
             <br />
-            +971 4 123 4567
+            +971 5 123 4567
           </div>
           <div style={{ marginTop: 4, fontSize: 8, color: theme.accent, fontWeight: 600 }}>
             TRN: 100234567890003
