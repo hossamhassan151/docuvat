@@ -12,25 +12,21 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata = {
-  title: "DOCUVAT — UAE VAT Invoice Builder",
-  description: "Create professional UAE VAT invoices, quotations, and purchase orders in seconds. TRN-compliant, bilingual Arabic & English. Built for UAE businesses.",
-  keywords: "UAE invoice, VAT invoice, tax invoice UAE, فاتورة ضريبية, TRN invoice, quotation UAE, LPO UAE, invoice builder Dubai",
+export const metadata: Metadata = {
+  title: "DocuVat | أفضل برنامج فواتير ضريبية في الإمارات - UAE VAT Invoices",
+  description: "منصة DocuVat لإنشاء الفواتير الضريبية، عروض الأسعار، وأوامر الشراء (LPO) في ثوانٍ. متوافق تماماً مع متطلبات الهيئة الاتحادية للضرائب في الإمارات.",
+  // السطر اللي تحت ده هو اللي هيخلي جوجل يثبت ملكيتك فوراً
+  verification: {
+    google: "umyfjUxWImXA-orSKhqwxgjYctDSmYq_fNs6k6nDGSc",
+  },
+  keywords: ["فواتير ضريبية", "الإمارات", "برنامج حسابات", "VAT UAE", "Tax Invoice", "LPO", "Quotations"],
   openGraph: {
-    title: "DOCUVAT — UAE VAT Invoice Builder",
-    description: "Create professional UAE VAT invoices in seconds. TRN-compliant, bilingual, beautifully designed.",
+    title: "DocuVat | نظام الفواتير الذكي للشركات الإماراتية",
+    description: "أنشئ مستندات عملك باحترافية وسرعة. فواتير، عروض أسعار، وأوامر شراء.",
     url: "https://www.docuvat.com",
-    siteName: "DOCUVAT",
-    locale: "en_AE",
+    siteName: "DocuVat",
+    locale: "ar_AE",
     type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "DOCUVAT — UAE VAT Invoice Builder",
-    description: "Create professional UAE VAT invoices in seconds.",
-  },
-  alternates: {
-    canonical: "https://www.docuvat.com",
   },
 };
 
