@@ -4,8 +4,6 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 type DocType = "invoice" | "quotation" | "lpo";
 type TemplateId = 1 | 2 | 3;
 
@@ -46,8 +44,6 @@ interface InvoiceData {
   colorScheme: string;
 }
 
-// ─── Color Schemes ────────────────────────────────────────────────────────────
-
 interface ColorScheme {
   name: string;
   primary: string;
@@ -73,8 +69,6 @@ const COLOR_SCHEMES: Record<TemplateId, Record<string, ColorScheme>> = {
     black: { name: "Prestige",   primary: "#1A1A1A", accent: "#C9A84C", light: "#F8F8F5", headerText: "#C9A84C" },
   },
 };
-
-// ─── Document Config ──────────────────────────────────────────────────────────
 
 interface DocConfig {
   label: string; labelAr: string;
@@ -116,8 +110,6 @@ const DOC_CONFIG: Record<DocType, DocConfig> = {
   },
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 function generateId() { return Math.random().toString(36).slice(2, 9); }
 
 function formatCurrency(n: number, currency = "AED") {
@@ -143,14 +135,18 @@ function numberToWords(n: number): string {
   return numberToWords(Math.floor(n / 1_000_000)) + " Million" + (n % 1_000_000 ? " " + numberToWords(n % 1_000_000) : "");
 }
 
-// ─── Default Data ─────────────────────────────────────────────────────────────
+function generateDocNumber(prefix: string, counter: number, style: "simple" | "yearly"): string {
+  const num = String(counter).padStart(4, "0");
+  const year = new Date().getFullYear();
+  return style === "yearly" ? `${prefix}-${year}-${num}` : `${prefix}-${num}`;
+}
 
 const defaultData: InvoiceData = {
   docType: "invoice",
   companyName: "", companyAddress: "", companyCity: "", companyCountry: "United Arab Emirates",
   companyPhone: "", companyEmail: "", companyWebsite: "", companyTRN: "", logoBase64: null,
   clientName: "", clientAddress: "", clientCity: "", clientTRN: "",
-  docNumber: "INV-2025-001", docDate: new Date().toISOString().split("T")[0], dueDate: "",
+  docNumber: "INV-0001", docDate: new Date().toISOString().split("T")[0], dueDate: "",
   currency: "AED", enableVat: true, vatRate: 5,
   notes: "Payment is due within 30 days of invoice date.\nPlease include invoice number in your payment reference.",
   bankName: "", iban: "", swift: "",
@@ -158,16 +154,12 @@ const defaultData: InvoiceData = {
   template: 1, colorScheme: "navy",
 };
 
-// ─── useCalc ──────────────────────────────────────────────────────────────────
-
 function useCalc(data: InvoiceData) {
   const subtotal = data.items.reduce((s, i) => s + i.qty * i.unitPrice, 0);
   const vat = data.enableVat ? subtotal * (data.vatRate / 100) : 0;
   const total = subtotal + vat;
   return { subtotal, vat, total, words: numberToWords(Math.floor(total)) };
 }
-
-// ─── Shared Blocks ────────────────────────────────────────────────────────────
 
 function TotalsBlock({ data, subtotal, vat, total, words, primaryBg, accentText, lightBg, borderColor }: {
   data: InvoiceData; subtotal: number; vat: number; total: number; words: string;
@@ -234,11 +226,19 @@ function SignatureBlock({ accentColor }: { accentColor: string }) {
 
 interface CardData { t: string; name: string; addr: string; extra?: string; trn: string; }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// TEMPLATE 1
-// ══════════════════════════════════════════════════════════════════════════════
+function Watermark() {
+  return (
+    <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 9999, overflow: "hidden" }}>
+      {Array.from({ length: 20 }).map((_, i) => (
+        <div key={i} style={{ position: "absolute", top: `${(i % 5) * 22}%`, left: `${Math.floor(i / 5) * 30}%`, transform: "rotate(-35deg)", fontSize: 22, fontWeight: 800, color: "rgba(0,0,0,0.07)", fontFamily: "sans-serif", whiteSpace: "nowrap", userSelect: "none" }}>
+          DOCUVAT.COM
+        </div>
+      ))}
+    </div>
+  );
+}
 
-function Template1({ data }: { data: InvoiceData }) {
+function Template1({ data, isGuest }: { data: InvoiceData; isGuest: boolean }) {
   const calc = useCalc(data);
   const cfg = DOC_CONFIG[data.docType];
   const cs = COLOR_SCHEMES[1][data.colorScheme] ?? COLOR_SCHEMES[1].navy;
@@ -248,15 +248,7 @@ function Template1({ data }: { data: InvoiceData }) {
     { t: `${cfg.toLabel} — ${cfg.toLabelAr}`, name: data.clientName, addr: data.clientAddress, extra: data.clientCity, trn: cfg.showTRN ? data.clientTRN : "" },
   ];
   return (
-    <div style={{
-  background: "white",
-  fontFamily: "'Segoe UI', system-ui, sans-serif",
-  fontSize: 13,
-  minHeight: "297mm",
-  width: "210mm",
-  display: "flex",
-  flexDirection: "column",
-}}>
+    <div style={{ background: "white", fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 13, minHeight: "297mm", width: "210mm", display: "flex", flexDirection: "column" }}>
       <div style={{ height: 5, background: `linear-gradient(90deg, ${P}, ${A})` }} />
       <div style={{ padding: "32px 48px 24px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
@@ -313,15 +305,12 @@ function Template1({ data }: { data: InvoiceData }) {
       <NotesBlock data={data} borderColor="#e5e7eb" />
       <SignatureBlock accentColor={A} />
       <div style={{ marginTop: "auto", background: P, color: HT, padding: "12px 48px", fontSize: 10 }}>{cfg.footerNote}</div>
+      {isGuest && <Watermark />}
     </div>
   );
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// TEMPLATE 2
-// ══════════════════════════════════════════════════════════════════════════════
-
-function Template2({ data }: { data: InvoiceData }) {
+function Template2({ data, isGuest }: { data: InvoiceData; isGuest: boolean }) {
   const calc = useCalc(data);
   const cfg = DOC_CONFIG[data.docType];
   const cs = COLOR_SCHEMES[2][data.colorScheme] ?? COLOR_SCHEMES[2].red;
@@ -331,15 +320,7 @@ function Template2({ data }: { data: InvoiceData }) {
     { t: `${cfg.toLabel} — ${cfg.toLabelAr}`, name: data.clientName, addr: data.clientAddress, extra: data.clientCity, trn: cfg.showTRN ? data.clientTRN : "" },
   ];
   return (
-    <div style={{
-  background: "white",
-  fontFamily: "'Segoe UI', system-ui, sans-serif",
-  fontSize: 13,
-  minHeight: "297mm",
-  width: "210mm",
-  display: "flex",
-  flexDirection: "column",
-}}>
+    <div style={{ background: "white", fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 13, minHeight: "297mm", width: "210mm", display: "flex", flexDirection: "column" }}>
       <div style={{ padding: "36px 48px 24px", borderBottom: `3px solid ${P}`, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
         <div>
           {data.logoBase64 && <img src={data.logoBase64} alt="logo" style={{ maxHeight: 48, maxWidth: 160, objectFit: "contain", display: "block", marginBottom: 10 }} />}
@@ -392,15 +373,12 @@ function Template2({ data }: { data: InvoiceData }) {
       <NotesBlock data={data} borderColor="#ecf0f1" />
       <SignatureBlock accentColor={A} />
       <div style={{ marginTop: "auto", borderTop: "0.5px solid #ecf0f1", padding: "12px 48px", fontSize: 10, color: "#bbb" }}>{cfg.footerNote}</div>
+      {isGuest && <Watermark />}
     </div>
   );
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// TEMPLATE 3
-// ══════════════════════════════════════════════════════════════════════════════
-
-function Template3({ data }: { data: InvoiceData }) {
+function Template3({ data, isGuest }: { data: InvoiceData; isGuest: boolean }) {
   const calc = useCalc(data);
   const cfg = DOC_CONFIG[data.docType];
   const cs = COLOR_SCHEMES[3][data.colorScheme] ?? COLOR_SCHEMES[3].green;
@@ -410,15 +388,7 @@ function Template3({ data }: { data: InvoiceData }) {
     { t: `${cfg.toLabel} — ${cfg.toLabelAr}`, name: data.clientName, addr: `${data.clientAddress}\n${data.clientCity}`, trn: cfg.showTRN ? data.clientTRN : "" },
   ];
   return (
-    <div style={{
-  background: "white",
-  fontFamily: "'Segoe UI', system-ui, sans-serif",
-  fontSize: 13,
-  minHeight: "297mm",
-  width: "210mm",
-  display: "flex",
-  flexDirection: "column",
-}}>
+    <div style={{ background: "white", fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 13, minHeight: "297mm", width: "210mm", display: "flex", flexDirection: "column" }}>
       <div style={{ height: 8, background: `linear-gradient(90deg, ${P}, ${G}, ${P})` }} />
       <div style={{ padding: "28px 48px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
@@ -474,13 +444,10 @@ function Template3({ data }: { data: InvoiceData }) {
       <SignatureBlock accentColor={P} />
       <div style={{ marginTop: "auto", borderTop: `2px solid ${P}`, padding: "12px 48px", fontSize: 10, color: "#aaa" }}>{cfg.footerNote}</div>
       <div style={{ height: 6, background: `linear-gradient(90deg, ${G}, ${P}, ${G})` }} />
+      {isGuest && <Watermark />}
     </div>
   );
 }
-
-// ══════════════════════════════════════════════════════════════════════════════
-// SIDEBAR HELPERS
-// ══════════════════════════════════════════════════════════════════════════════
 
 const inputCls = "w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition placeholder-gray-400";
 const labelCls = "block text-xs font-medium text-gray-500 mb-1";
@@ -521,26 +488,35 @@ const DOC_TYPES: { id: DocType; label: string; icon: string }[] = [
   { id: "lpo",       label: "Purchase Order", icon: "📦" },
 ];
 
-// ══════════════════════════════════════════════════════════════════════════════
-// MAIN
-// ══════════════════════════════════════════════════════════════════════════════
-
 export default function InvoiceBuilder({ initialType }: { initialType: "invoice" | "quotation" | "lpo" }) {
   const router = useRouter();
   const supabase = createClient();
-
-  const [data, setData] = useState<InvoiceData>({
-    ...defaultData,
-    docType: initialType,
-  });
+  const [isGuest, setIsGuest] = useState(true);
+  const [data, setData] = useState<InvoiceData>({ ...defaultData, docType: initialType });
   const printRef = useRef<HTMLDivElement>(null);
   const [plan, setPlan] = useState<"free" | "pro">("free");
+  const [numberingStyle, setNumberingStyle] = useState<"simple" | "yearly">("simple");
 
+  // ─── دالة مساعدة لجلب الـ counter field حسب نوع الوثيقة ───────────────────
+  const getCounterField = (docType: DocType) =>
+    docType === "invoice" ? "invoice_counter" :
+    docType === "quotation" ? "quotation_counter" : "lpo_counter";
+
+  const getPrefix = (docType: DocType) =>
+    docType === "invoice" ? "INV" : docType === "quotation" ? "QT" : "PO";
+
+  // ─── تحميل البيانات عند الدخول ────────────────────────────────────────────
   useEffect(() => {
     const loadProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
 
+      if (!user) {
+        setIsGuest(true);
+        return;
+      }
+      setIsGuest(false);
+
+      // جلب بيانات الشركة
       const { data: company } = await supabase
         .from("companies")
         .select("*")
@@ -548,33 +524,45 @@ export default function InvoiceBuilder({ initialType }: { initialType: "invoice"
         .single();
 
       if (company) {
-  setData((prev) => ({
-    ...prev,
-    companyName: company.name || "",
-    companyAddress: company.address || "",
-    companyCity: company.city || "",
-    companyCountry: company.country || "",
-    companyPhone: company.phone || "",
-    companyEmail: company.email || "",
-    companyWebsite: company.website || "",
-    companyTRN: company.trn || "",
-    logoBase64: company.logo_url || prev.logoBase64,
-  }));
-}
+        setData((prev) => ({
+          ...prev,
+          companyName: company.name || "",
+          companyAddress: company.address || "",
+          companyCity: company.city || "",
+          companyCountry: company.country || "",
+          companyPhone: company.phone || "",
+          companyEmail: company.email || "",
+          companyWebsite: company.website || "",
+          companyTRN: company.trn || "",
+          logoBase64: company.logo_url || prev.logoBase64,
+        }));
+      }
 
+      // جلب البروفايل والـ counter
+      const counterField = getCounterField(initialType);
       const { data: profile } = await supabase
         .from("profiles")
-        .select("plan")
+        .select(`plan, numbering_style, ${counterField}`)
         .eq("id", user.id)
         .single();
 
-      if (profile) setPlan(profile.plan);
+      if (profile) {
+        const style = (profile.numbering_style as "simple" | "yearly") ?? "simple";
+        setPlan(profile.plan);
+        setNumberingStyle(style);
+
+        // ✅ عرض الرقم التالي تلقائياً بناءً على الـ counter الحالي
+const currentCounter = ((profile as Record<string, unknown>)[counterField] as number) ?? 0;
+        const prefix = getPrefix(initialType);
+        setData((prev) => ({
+          ...prev,
+          docNumber: generateDocNumber(prefix, currentCounter + 1, style),
+        }));
+      }
     };
 
     loadProfile();
-    
   }, []);
-  
 
   const set = useCallback(<K extends keyof InvoiceData>(key: K, value: InvoiceData[K]) => {
     setData((prev) => ({ ...prev, [key]: value }));
@@ -590,7 +578,7 @@ export default function InvoiceBuilder({ initialType }: { initialType: "invoice"
     setData((prev) => ({
       ...prev,
       docType: dt,
-      docNumber: `${cfg.numberPrefix}-2025-001`,
+      docNumber: `${cfg.numberPrefix}-0001`,
       dueDate: "",
       enableVat: dt !== "quotation",
       notes: notesMap[dt],
@@ -618,12 +606,9 @@ export default function InvoiceBuilder({ initialType }: { initialType: "invoice"
 
   const handlePrint = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      router.push("/login");
-      return;
-    }
 
-    if (plan === "free") {
+    // ─── فحص الحد اليومي للـ free plan ───────────────────────────────────────
+    if (user && plan === "free") {
       const today = new Date().toISOString().split("T")[0];
       const { count } = await supabase
         .from("documents")
@@ -637,23 +622,68 @@ export default function InvoiceBuilder({ initialType }: { initialType: "invoice"
       }
     }
 
-    await supabase.from("documents").insert({
-      user_id: user.id,
-      doc_type: data.docType,
-      doc_number: data.docNumber,
-      doc_date: data.docDate,
-      total: data.items.reduce((s, i) => s + i.qty * i.unitPrice, 0),
-    });
+    if (user) {
+      // ─── حفظ الوثيقة ───────────────────────────────────────────────────────
+      await supabase.from("documents").insert({
+        user_id: user.id,
+        doc_type: data.docType,
+        doc_number: data.docNumber,
+        doc_date: data.docDate,
+        total: data.items.reduce((s, i) => s + i.qty * i.unitPrice, 0),
+      });
 
+      // ─── تحديث الـ counter بشكل صحيح ──────────────────────────────────────
+      const counterField = getCounterField(data.docType);
+      const prefix = getPrefix(data.docType);
+
+      // جيب الـ counter الحالي
+      const { data: currentProfile } = await supabase
+        .from("profiles")
+        .select(counterField)
+        .eq("id", user.id)
+        .single();
+
+      const { data: profileData } = await supabase
+  .from("profiles")
+  .select(counterField)
+  .eq("id", user.id)
+  .single();
+
+const currentCounter = (profileData as Record<string, number> | null)?.[counterField] ?? 0;
+      const nextCounter = currentCounter + 1;
+
+      // حفظ الـ counter الجديد
+      await supabase
+        .from("profiles")
+        .update({ [counterField]: nextCounter })
+        .eq("id", user.id);
+
+      // ✅ جهز رقم الوثيقة التالية (للمرة القادمة)
+      setData((prev) => ({
+        ...prev,
+        docNumber: generateDocNumber(prefix, nextCounter + 1, numberingStyle),
+      }));
+    }
+
+    // ─── الطباعة ───────────────────────────────────────────────────────────────
     const content = printRef.current?.innerHTML;
     if (!content) return;
     const win = window.open("", "_blank");
     if (!win) return;
-    win.document.write(`<!DOCTYPE html><html><head><title>${data.docNumber}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{margin:0;size:A4}</style></head><body>${content}</body></html>`);
+
+    const watermarkHtml = !user ? `
+      <div style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;overflow:hidden;">
+        ${Array.from({ length: 20 }).map((_, i) => `
+          <div style="position:absolute;top:${(i % 5) * 22}%;left:${Math.floor(i / 5) * 30}%;transform:rotate(-35deg);font-size:22px;font-weight:800;color:rgba(0,0,0,0.07);font-family:sans-serif;white-space:nowrap;user-select:none;">DOCUVAT.COM</div>
+        `).join("")}
+      </div>` : "";
+
+    win.document.write(`<!DOCTYPE html><html><head><title>${data.docNumber}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{margin:0;size:A4}</style></head><body>${content}${watermarkHtml}</body></html>`);
     win.document.close();
     win.focus();
     setTimeout(() => { win.print(); win.close(); }, 300);
-    router.push("/dashboard");
+
+    if (user) router.push("/dashboard");
   };
 
   const TemplateComponent = data.template === 1 ? Template1 : data.template === 2 ? Template2 : Template3;
@@ -718,7 +748,9 @@ export default function InvoiceBuilder({ initialType }: { initialType: "invoice"
             <div className="border-2 border-dashed border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-blue-300 transition-colors"
               onClick={() => document.getElementById("logoUpload")?.click()}>
               <input id="logoUpload" type="file" accept="image/*" className="hidden" onChange={handleLogo} />
-              {data.logoBase64 ? <img src={data.logoBase64} alt="logo" className="max-h-10 max-w-full object-contain mx-auto" /> : <div className="text-xs text-gray-400">📎 Upload Logo</div>}
+              {data.logoBase64
+                ? <img src={data.logoBase64} alt="logo" className="max-h-10 max-w-full object-contain mx-auto" />
+                : <div className="text-xs text-gray-400">📎 Upload Logo</div>}
             </div>
             <Field label="Company Name *" value={data.companyName} onChange={(v) => set("companyName", v)} placeholder="Your company name" />
             <Field label="Address" value={data.companyAddress} onChange={(v) => set("companyAddress", v)} placeholder="Street, building" />
@@ -740,7 +772,14 @@ export default function InvoiceBuilder({ initialType }: { initialType: "invoice"
           </Section>
 
           <Section title="Document Details">
-            <Field label={cfg.numberLabel} value={data.docNumber} onChange={(v) => set("docNumber", v)} placeholder={`${cfg.numberPrefix}-2025-001`} />
+            {/* ✅ رقم الوثيقة read-only  */}
+            <div>
+              <label className={labelCls}>{cfg.numberLabel}</label>
+              <div className="w-full px-3 py-2 text-sm border border-gray-100 rounded-lg bg-gray-50 text-gray-600 font-mono tracking-wide select-none cursor-not-allowed">
+                {data.docNumber}
+              </div>
+              <p className="text-[10px] text-gray-400 mt-1">🔒 </p>
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <Field label="Date" value={data.docDate} onChange={(v) => set("docDate", v)} type="date" />
               <Field label={cfg.dueDateLabel} value={data.dueDate} onChange={(v) => set("dueDate", v)} type="date" />
@@ -851,17 +890,6 @@ export default function InvoiceBuilder({ initialType }: { initialType: "invoice"
               } else {
                 await supabase.from("companies").insert(companyData);
               }
-              setData((prev) => ({
-                ...prev,
-                companyName: companyData.name || "",
-                companyAddress: companyData.address || "",
-                companyCity: companyData.city || "",
-                companyCountry: companyData.country || "",
-                companyPhone: companyData.phone || "",
-                companyEmail: companyData.email || "",
-                companyWebsite: companyData.website || "",
-                companyTRN: companyData.trn || "",
-              }));
               alert("Company profile saved!");
             }}
             className="w-full py-2.5 mb-2 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-100 transition-all"
@@ -895,7 +923,7 @@ export default function InvoiceBuilder({ initialType }: { initialType: "invoice"
             </div>
           </div>
           <div ref={printRef} className="shadow-xl rounded-lg overflow-hidden">
-            <TemplateComponent data={data} />
+            <TemplateComponent data={data} isGuest={isGuest} />
           </div>
         </div>
       </main>

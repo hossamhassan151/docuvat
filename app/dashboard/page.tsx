@@ -4,9 +4,10 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
+import Script from "next/script"; // أضفت هذا لربطه بجوجل أناليتكس لو احتجت
 import {
   Receipt, FileText, ShoppingCart, LogOut, MessageCircle,
-  Crown, Shield, Pencil, X, Check, Upload, Download, Eye
+  Crown, Shield, Pencil, X, Check, Upload, Eye
 } from "lucide-react";
 
 interface Profile {
@@ -14,6 +15,10 @@ interface Profile {
   email: string;
   plan: string;
   is_admin: boolean;
+  numbering_style: string;
+  invoice_counter: number;
+  quotation_counter: number;
+  lpo_counter: number;
 }
 
 interface Company {
@@ -46,10 +51,16 @@ const inputCls = "w-full px-3 py-2 text-sm rounded-lg bg-white/5 border border-w
 const labelCls = "block text-xs font-medium text-slate-400 mb-1";
 
 const DOC_TYPE_LABELS: Record<string, { label: string; color: string; icon: string }> = {
-  invoice:   { label: "Tax Invoice",   color: "text-blue-400 bg-blue-500/10 border-blue-500/20",   icon: "🧾" },
-  quotation: { label: "Quotation",     color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20", icon: "📋" },
-  lpo:       { label: "Purchase Order", color: "text-purple-400 bg-purple-500/10 border-purple-500/20", icon: "📦" },
+  invoice:   { label: "Tax Invoice",    color: "text-blue-400 bg-blue-500/10 border-blue-500/20",          icon: "🧾" },
+  quotation: { label: "Quotation",      color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20", icon: "📋" },
+  lpo:       { label: "Purchase Order", color: "text-purple-400 bg-purple-500/10 border-purple-500/20",    icon: "📦" },
 };
+
+function generateDocNumber(prefix: string, counter: number, style: string): string {
+  const num = String(counter).padStart(4, "0");
+  const year = new Date().getFullYear();
+  return style === "yearly" ? `${prefix}-${year}-${num}` : `${prefix}-${num}`;
+}
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -73,6 +84,9 @@ export default function DashboardPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [docsLoading, setDocsLoading] = useState(true);
 
+  const [numberingStyle, setNumberingStyle] = useState<"simple" | "yearly">("simple");
+  const [savingStyle, setSavingStyle] = useState(false);
+
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -80,12 +94,19 @@ export default function DashboardPage() {
       setUserId(user.id);
 
       const [profileRes, companyRes, statsRes] = await Promise.all([
-        supabase.from("profiles").select("full_name, email, plan, is_admin").eq("id", user.id).single(),
+        supabase.from("profiles")
+          .select("full_name, email, plan, is_admin, numbering_style, invoice_counter, quotation_counter, lpo_counter")
+          .eq("id", user.id).single(),
         supabase.from("companies").select("*").eq("user_id", user.id).maybeSingle(),
         supabase.from("documents").select("id", { count: "exact", head: true }).eq("user_id", user.id),
       ]);
 
-      if (profileRes.data) setProfile(profileRes.data);
+      if (profileRes.data) {
+        setProfile(profileRes.data);
+        if (profileRes.data.numbering_style) {
+          setNumberingStyle(profileRes.data.numbering_style as "simple" | "yearly");
+        }
+      }
 
       if (companyRes.data) {
         setCompanyId(companyRes.data.id);
@@ -141,16 +162,13 @@ export default function DashboardPage() {
   const saveCompany = async () => {
     if (!userId) return;
     setSavingCompany(true);
-
     const companyData = { user_id: userId, ...companyDraft, logo_url: company.logo_url };
-
     if (companyId) {
       await supabase.from("companies").update(companyData).eq("id", companyId);
     } else {
       const { data } = await supabase.from("companies").insert(companyData).select("id").single();
       if (data) setCompanyId(data.id);
     }
-
     setCompany({ ...companyDraft, logo_url: company.logo_url });
     setEditingCompany(false);
     setSavingCompany(false);
@@ -159,37 +177,35 @@ export default function DashboardPage() {
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !userId) return;
-
     setUploadingLogo(true);
     const ext = file.name.split(".").pop();
     const path = `${userId}/logo.${ext}`;
-
-    const { error } = await supabase.storage
-      .from("logos")
-      .upload(path, file, { upsert: true });
-
+    const { error } = await supabase.storage.from("logos").upload(path, file, { upsert: true });
     if (!error) {
       const { data } = supabase.storage.from("logos").getPublicUrl(path);
       const logoUrl = `${data.publicUrl}?t=${Date.now()}`;
-
       if (companyId) {
         await supabase.from("companies").update({ logo_url: logoUrl }).eq("id", companyId);
       } else {
         const { data: newComp } = await supabase.from("companies")
-          .insert({ user_id: userId, logo_url: logoUrl })
-          .select("id").single();
+          .insert({ user_id: userId, logo_url: logoUrl }).select("id").single();
         if (newComp) setCompanyId(newComp.id);
       }
-
       setCompany((prev) => ({ ...prev, logo_url: logoUrl }));
       setLogoPreview(logoUrl);
     }
-
     setUploadingLogo(false);
   };
 
   const openDocument = (doc: Document) => {
     router.push(`/${doc.doc_type}?docId=${doc.id}`);
+  };
+
+  const saveNumberingStyle = async () => {
+    if (!userId) return;
+    setSavingStyle(true);
+    await supabase.from("profiles").update({ numbering_style: numberingStyle }).eq("id", userId);
+    setSavingStyle(false);
   };
 
   if (loading) {
@@ -204,6 +220,9 @@ export default function DashboardPage() {
   }
 
   const isPro = profile?.plan === "pro";
+  const invCounter = (profile?.invoice_counter || 0) + 1;
+  const qtCounter  = (profile?.quotation_counter || 0) + 1;
+  const poCounter  = (profile?.lpo_counter || 0) + 1;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white">
@@ -296,14 +315,15 @@ export default function DashboardPage() {
               <div className="text-center py-8 text-slate-500 text-sm animate-pulse">Loading documents...</div>
             ) : documents.length === 0 ? (
               <div className="text-center py-8 text-slate-500 text-sm">
-                No documents yet. <Link href="/invoice" className="text-blue-400 hover:text-blue-300">Create your first invoice</Link>
+                No documents yet.{" "}
+                <Link href="/invoice" className="text-blue-400 hover:text-blue-300">Create your first invoice</Link>
               </div>
             ) : (
               <div className="space-y-2">
                 {documents.map((doc) => {
                   const typeInfo = DOC_TYPE_LABELS[doc.doc_type] || DOC_TYPE_LABELS.invoice;
                   return (
-                    <div key={doc.id} className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all group">
+                    <div key={doc.id} className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all">
                       <div className="flex items-center gap-3">
                         <span className="text-lg">{typeInfo.icon}</span>
                         <div>
@@ -383,13 +403,7 @@ export default function DashboardPage() {
                   </button>
                   <p className="text-xs text-slate-500 mt-1">PNG, JPG up to 2MB</p>
                 </div>
-                <input
-                  ref={logoInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleLogoUpload}
-                />
+                <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
               </div>
             </div>
 
@@ -414,7 +428,8 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <div className="text-center py-6 text-slate-500 text-sm">
-                  No company profile yet. <button onClick={startEdit} className="text-blue-400 hover:text-blue-300">Add your company details</button>
+                  No company profile yet.{" "}
+                  <button onClick={startEdit} className="text-blue-400 hover:text-blue-300">Add your company details</button>
                 </div>
               )
             ) : (
@@ -431,6 +446,56 @@ export default function DashboardPage() {
             )}
           </div>
 
+          <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-6 mb-10">
+            <div className="mb-4">
+              <h2 className="text-lg font-bold">Invoice Numbering</h2>
+              <p className="text-xs text-slate-400 mt-0.5">Choose how your document numbers are generated automatically</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <button
+                onClick={() => setNumberingStyle("simple")}
+                className={`p-4 rounded-xl border text-left transition-all ${
+                  numberingStyle === "simple"
+                    ? "border-blue-500 bg-blue-500/10 text-white"
+                    : "border-white/10 bg-white/5 text-slate-400 hover:border-white/20"
+                }`}
+              >
+                <div className="font-semibold text-sm mb-2">Simple</div>
+                <div className="space-y-1">
+                  <div className="text-xs opacity-70 font-mono">{generateDocNumber("INV", invCounter, "simple")}</div>
+                  <div className="text-xs opacity-70 font-mono">{generateDocNumber("QT", qtCounter, "simple")}</div>
+                  <div className="text-xs opacity-70 font-mono">{generateDocNumber("PO", poCounter, "simple")}</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setNumberingStyle("yearly")}
+                className={`p-4 rounded-xl border text-left transition-all ${
+                  numberingStyle === "yearly"
+                    ? "border-blue-500 bg-blue-500/10 text-white"
+                    : "border-white/10 bg-white/5 text-slate-400 hover:border-white/20"
+                }`}
+              >
+                <div className="font-semibold text-sm mb-2">With Year</div>
+                <div className="space-y-1">
+                  <div className="text-xs opacity-70 font-mono">{generateDocNumber("INV", invCounter, "yearly")}</div>
+                  <div className="text-xs opacity-70 font-mono">{generateDocNumber("QT", qtCounter, "yearly")}</div>
+                  <div className="text-xs opacity-70 font-mono">{generateDocNumber("PO", poCounter, "yearly")}</div>
+                </div>
+              </button>
+            </div>
+
+            <button
+              onClick={saveNumberingStyle}
+              disabled={savingStyle}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-blue-500 to-emerald-500 text-sm font-semibold hover:opacity-90 transition-all disabled:opacity-50"
+            >
+              <Check className="h-4 w-4" />
+              {savingStyle ? "Saving..." : "Save Numbering Style"}
+            </button>
+          </div>
+
           {!isPro && (
             <div className="rounded-2xl border border-blue-500/30 bg-gradient-to-r from-blue-500/10 to-emerald-500/10 p-6 flex flex-col md:flex-row items-center justify-between gap-4">
               <div>
@@ -439,6 +504,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="text-sm text-slate-400">Unlimited documents, all templates, save company profile and more.</div>
               </div>
+              
               <a
                 href="https://wa.me/971501234567?text=I%20want%20to%20upgrade%20to%20DOCUVAT%20Pro"
                 target="_blank"
@@ -449,6 +515,7 @@ export default function DashboardPage() {
               </a>
             </div>
           )}
+
         </main>
       </div>
     </div>
