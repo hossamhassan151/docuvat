@@ -268,7 +268,7 @@ export default function PricingPage() {
         {/* ── FOOTER ── */}
         <footer className="border-t border-white/10 py-8 mt-10">
           <div className="mx-auto max-w-7xl px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-400">
-            <div>© 2025 DOCUVAT. All rights reserved.</div>
+            <div>© 2026 DOCUVAT. All rights reserved.</div>
             <div className="flex gap-6">
               <Link href="/about" className="hover:text-white transition-colors">About</Link>
               <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>

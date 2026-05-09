@@ -496,6 +496,12 @@ export default function InvoiceBuilder({ initialType }: { initialType: "invoice"
   const printRef = useRef<HTMLDivElement>(null);
   const [plan, setPlan] = useState<"free" | "pro">("free");
   const [numberingStyle, setNumberingStyle] = useState<"simple" | "yearly">("simple");
+  const [showReviewPopup, setShowReviewPopup] = useState(false);
+const [rating, setRating] = useState(0);
+const [reviewComment, setReviewComment] = useState("");
+const [reviewName, setReviewName] = useState("");
+const [reviewRole, setReviewRole] = useState("");
+const [submittingReview, setSubmittingReview] = useState(false);
 
   // ─── دالة مساعدة لجلب الـ counter field حسب نوع الوثيقة ───────────────────
   const getCounterField = (docType: DocType) =>
@@ -683,8 +689,26 @@ const currentCounter = (profileData as Record<string, number> | null)?.[counterF
     win.focus();
     setTimeout(() => { win.print(); win.close(); }, 300);
 
-    if (user) router.push("/dashboard");
+// شوف لو اليوزر عمل review قبل كده
+const { data: profileData } = await supabase
+  .from("profiles")
+  .select("last_review_at")
+  .eq("id", user?.id)
+  .single();
+
+const lastReview = profileData?.last_review_at;
+const twoWeeksAgo = new Date();
+twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+
+const shouldAskReview = !lastReview || new Date(lastReview) < twoWeeksAgo;
+
+if (shouldAskReview) {
+  setShowReviewPopup(true);
+} else {
+  router.push("/dashboard");
+}    
   };
+  
 
   const TemplateComponent = data.template === 1 ? Template1 : data.template === 2 ? Template2 : Template3;
   const cfg = DOC_CONFIG[data.docType];
@@ -866,7 +890,109 @@ const currentCounter = (profileData as Record<string, number> | null)?.[counterF
           </Section>
 
         </div>
+{/* Review Popup */}
+{showReviewPopup && (
+  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
 
+      <div className="text-center mb-6">
+        <div className="text-3xl mb-3">🌟</div>
+        <h3 className="text-xl font-bold text-gray-900 mb-1">How was your experience?</h3>
+        <p className="text-gray-500 text-sm">Your feedback helps us improve DOCUVAT</p>
+      </div>
+
+      {/* Stars */}
+      <div className="flex justify-center gap-2 mb-6">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            onClick={() => setRating(star)}
+            className="text-3xl transition-transform hover:scale-110"
+          >
+            {star <= rating ? "⭐" : "☆"}
+          </button>
+        ))}
+      </div>
+
+      {/* Name & Role */}
+      <div className="grid grid-cols-2 gap-3 mb-3">
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Your Name</label>
+          <input
+            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Ahmed Al-Rashid"
+            value={reviewName}
+            onChange={(e) => setReviewName(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Role / Business</label>
+          <input
+            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Consultant, Dubai"
+            value={reviewRole}
+            onChange={(e) => setReviewRole(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Comment */}
+      <div className="mb-5">
+        <label className="block text-xs font-medium text-gray-500 mb-1">Comment (optional)</label>
+        <textarea
+          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          rows={3}
+          placeholder="What did you like about DOCUVAT?"
+          value={reviewComment}
+          onChange={(e) => setReviewComment(e.target.value)}
+        />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <button
+          disabled={rating === 0 || submittingReview}
+          onClick={async () => {
+            if (rating === 0) return;
+            setSubmittingReview(true);
+
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            await supabase.from("reviews").insert({
+              user_id: user.id,
+              rating,
+              comment: reviewComment,
+              user_name: reviewName,
+              user_role: reviewRole,
+            });
+
+            await supabase.from("profiles")
+              .update({ last_review_at: new Date().toISOString() })
+              .eq("id", user.id);
+
+            setSubmittingReview(false);
+            setShowReviewPopup(false);
+            router.push("/dashboard");
+          }}
+          className="w-full py-3 bg-gradient-to-r from-blue-500 to-emerald-500 text-white font-semibold rounded-xl disabled:opacity-40 transition-all"
+        >
+          {submittingReview ? "Submitting..." : "Submit Review"}
+        </button>
+
+        <button
+          onClick={() => {
+            setShowReviewPopup(false);
+            router.push("/dashboard");
+          }}
+          className="w-full py-2.5 text-gray-400 text-sm hover:text-gray-600 transition-colors"
+        >
+          Skip for now
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
         <div className="p-4 border-t border-gray-100">
           <button
             onClick={async () => {
