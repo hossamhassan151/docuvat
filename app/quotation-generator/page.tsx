@@ -3,9 +3,12 @@ import Link from "next/link";
 
 // 1. إعدادات الـ SEO الخاصة بعروض الأسعار
 export const metadata: Metadata = {
-  title: "Professional Quotation Maker UAE | Free Quote Generator | DOCUVAT",
-  description: "Create and send professional business quotations in minutes. Customized for UAE startups and freelancers with AED support and PDF export. Convert leads into clients.",
-  keywords: ["Quotation Maker UAE", "Free Quote Generator Dubai", "Price Offer Template", "Business Proposal UAE"],
+  title: "Free Quotation Maker UAE | DOCUVAT",
+  description:
+    "Generate professional UAE quotations with VAT support and PDF export.",
+  alternates: {
+    canonical: "/quotation-generator",
+  },
 };
 
 export default function QuotationGeneratorPage() {

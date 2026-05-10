@@ -14,49 +14,105 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DocuVat | أفضل برنامج فواتير ضريبية في الإمارات - UAE VAT Invoices",
-  description: "منصة DocuVat لإنشاء الفواتير الضريبية، عروض الأسعار، وأوامر الشراء (LPO) في ثوانٍ. متوافق تماماً مع متطلبات الهيئة الاتحادية للضرائب في الإمارات.",
-  
-  // --- التصحيح الشامل للأيقونة لضمان ظهورها في جوجل ---
+  metadataBase: new URL("https://www.docuvat.com"),
+
+  title: {
+    default: "DocuVat | UAE VAT Invoice & Quotation System",
+    template: "%s | DocuVat",
+  },
+
+  description:
+    "Create VAT invoices, quotations, and LPOs in seconds. Fully compliant with UAE Federal Tax Authority (FTA) requirements.",
+
+  keywords: [
+    "UAE invoice generator",
+    "Dubai quotation maker",
+    "VAT invoice UAE",
+    "LPO generator",
+    "DocuVat",
+  ],
+
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
       { url: "/icon.png", type: "image/png", sizes: "32x32" },
-      { url: "/icon-48.png", type: "image/png", sizes: "48x48" }, // جوجل بيحب مقاس 48 جداً
+      { url: "/icon-48.png", type: "image/png", sizes: "48x48" },
     ],
     shortcut: "/favicon.ico",
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/apple-touch-icon.png", sizes: "180x180" },
     ],
   },
-  // -----------------------------------------------
+
+  openGraph: {
+    title: "DocuVat | UAE Business Invoices & Quotations",
+    description:
+      "Generate VAT-compliant invoices, quotations, and LPOs instantly in UAE.",
+    url: "https://www.docuvat.com",
+    siteName: "DocuVat",
+    type: "website",
+    locale: "en_AE",
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "DocuVat SaaS Preview",
+      },
+    ],
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "DocuVat UAE Invoice System",
+    description: "Professional invoices & quotations for UAE businesses.",
+    images: ["/og.png"],
+  },
+
+  robots: {
+    index: true,
+    follow: true,
+  },
 
   verification: {
     google: "umyfjUxWImXA-orSKhqwxgjYctDSmYq_fNs6k6nDGSc",
-  },
-  keywords: ["فواتير ضريبية", "الإمارات", "برنامج حسابات", "VAT UAE", "Tax Invoice", "LPO", "Quotations"],
-  openGraph: {
-    title: "DocuVat | نظام الفواتير الذكي للشركات الإماراتية",
-    description: "أنشئ مستندات عملك باحترافية وسرعة. فواتير، عروض أسعار، وأوامر شراء.",
-    url: "https://www.docuvat.com",
-    siteName: "DocuVat",
-    locale: "ar_AE",
-    type: "website",
   },
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html
-  lang="en"
-  className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <head>
+        {/* ✅ Structured Data (Schema.org) - المكان الصحيح */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              name: "DocuVat",
+              applicationCategory: "BusinessApplication",
+              operatingSystem: "Web",
+              description:
+                "UAE VAT invoice, quotation and LPO generator system.",
+              offers: {
+                "@type": "Offer",
+                price: "0",
+                priceCurrency: "AED",
+              },
+            }),
+          }}
+        />
+      </head>
+
+      <body className="min-h-full flex flex-col bg-black text-white">
         {children}
 
         {/* Google Analytics */}
@@ -64,7 +120,7 @@ export default function RootLayout({
           src="https://www.googletagmanager.com/gtag/js?id=G-HNE73B20HF"
           strategy="afterInteractive"
         />
-        <Script id="google-analytics" strategy="afterInteractive">
+        <Script id="ga" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
