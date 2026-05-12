@@ -6,6 +6,119 @@ import { createClient } from "@/lib/supabase";
 
 type DocType = "invoice" | "quotation" | "lpo";
 type TemplateId = 1 | 2 | 3;
+type CountryCode =
+  | "AE"
+  | "SA"
+  | "KW"
+  | "QA"
+  | "OM"
+  | "BH";
+
+// ─── Country Config ────────────────────────────────────────────────────────────
+
+interface CountryConfig {
+  code: CountryCode;
+  name: string;
+  flag: string;
+  currency: string;
+  vatRate: number;
+  vatLabel: string;
+  taxNumberLabel: string;
+  taxNumberPlaceholder: string;
+  invoiceFooter: string;
+  defaultCountry: string;
+  defaultCity: string;
+}
+
+const COUNTRY_CONFIG: Record<CountryCode, CountryConfig> = {
+  AE: {
+    code: "AE",
+    name: "UAE",
+    flag: "🇦🇪",
+    currency: "AED",
+    vatRate: 5,
+    vatLabel: "VAT",
+    taxNumberLabel: "TRN",
+    taxNumberPlaceholder: "100234567890003",
+    invoiceFooter:
+      "This is an official UAE VAT Tax Invoice pursuant to Federal Decree-Law No. (8) of 2017 — فاتورة ضريبية رسمية",
+    defaultCountry: "United Arab Emirates",
+    defaultCity: "Dubai",
+  },
+
+  SA: {
+    code: "SA",
+    name: "Saudi Arabia",
+    flag: "🇸🇦",
+    currency: "SAR",
+    vatRate: 15,
+    vatLabel: "VAT",
+    taxNumberLabel: "VAT Number",
+    taxNumberPlaceholder: "300234567890003",
+    invoiceFooter:
+      "This is an official KSA VAT Tax Invoice pursuant to the VAT Law issued by Royal Decree No. (M/113) — فاتورة ضريبية رسمية",
+    defaultCountry: "Saudi Arabia",
+    defaultCity: "Riyadh",
+  },
+
+  KW: {
+    code: "KW",
+    name: "Kuwait",
+    flag: "🇰🇼",
+    currency: "KWD",
+    vatRate: 0,
+    vatLabel: "VAT",
+    taxNumberLabel: "Tax Number",
+    taxNumberPlaceholder: "123456789",
+    invoiceFooter: "Official Kuwait Invoice",
+    defaultCountry: "Kuwait",
+    defaultCity: "Kuwait City",
+  },
+
+  QA: {
+    code: "QA",
+    name: "Qatar",
+    flag: "🇶🇦",
+    currency: "QAR",
+    vatRate: 0,
+    vatLabel: "VAT",
+    taxNumberLabel: "Tax Number",
+    taxNumberPlaceholder: "123456789",
+    invoiceFooter: "Official Qatar Invoice",
+    defaultCountry: "Qatar",
+    defaultCity: "Doha",
+  },
+
+  OM: {
+    code: "OM",
+    name: "Oman",
+    flag: "🇴🇲",
+    currency: "OMR",
+    vatRate: 5,
+    vatLabel: "VAT",
+    taxNumberLabel: "VAT Number",
+    taxNumberPlaceholder: "OM1100000000",
+    invoiceFooter: "Official Oman VAT Invoice",
+    defaultCountry: "Oman",
+    defaultCity: "Muscat",
+  },
+
+  BH: {
+    code: "BH",
+    name: "Bahrain",
+    flag: "🇧🇭",
+    currency: "BHD",
+    vatRate: 10,
+    vatLabel: "VAT",
+    taxNumberLabel: "VAT Number",
+    taxNumberPlaceholder: "200123456700001",
+    invoiceFooter: "Official Bahrain VAT Invoice",
+    defaultCountry: "Bahrain",
+    defaultCity: "Manama",
+  },
+};
+
+// ─── Types ─────────────────────────────────────────────────────────────────────
 
 interface InvoiceItem {
   id: string;
@@ -76,7 +189,6 @@ interface DocConfig {
   dueDateLabel: string;
   fromLabel: string; fromLabelAr: string;
   toLabel: string; toLabelAr: string;
-  footerNote: string;
   showBank: boolean; showTRN: boolean; vatOptional: boolean;
 }
 
@@ -87,7 +199,6 @@ const DOC_CONFIG: Record<DocType, DocConfig> = {
     dueDateLabel: "Due Date",
     fromLabel: "Billed By", fromLabelAr: "من",
     toLabel: "Billed To", toLabelAr: "إلى",
-    footerNote: "This is an official UAE VAT Tax Invoice pursuant to Federal Decree-Law No. (8) of 2017 — فاتورة ضريبية رسمية",
     showBank: true, showTRN: true, vatOptional: false,
   },
   quotation: {
@@ -96,7 +207,6 @@ const DOC_CONFIG: Record<DocType, DocConfig> = {
     dueDateLabel: "Valid Until",
     fromLabel: "Prepared By", fromLabelAr: "معد من",
     toLabel: "Prepared For", toLabelAr: "مقدم إلى",
-    footerNote: "This is a quotation only and not a tax invoice. Prices are subject to change after the validity date.",
     showBank: false, showTRN: false, vatOptional: true,
   },
   lpo: {
@@ -105,10 +215,11 @@ const DOC_CONFIG: Record<DocType, DocConfig> = {
     dueDateLabel: "Delivery Date",
     fromLabel: "Issued By", fromLabelAr: "صادر من",
     toLabel: "Vendor", toLabelAr: "المورد",
-    footerNote: "This Purchase Order is subject to agreed terms and conditions between both parties.",
     showBank: false, showTRN: true, vatOptional: false,
   },
 };
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
 
 function generateId() { return Math.random().toString(36).slice(2, 9); }
 
@@ -141,6 +252,13 @@ function generateDocNumber(prefix: string, counter: number, style: "simple" | "y
   return style === "yearly" ? `${prefix}-${year}-${num}` : `${prefix}-${num}`;
 }
 
+function getCurrencyWord(currency: string): string {
+  const map: Record<string, string> = {
+    AED: "Dirhams", SAR: "Riyals", USD: "Dollars", EUR: "Euros", GBP: "Pounds",
+  };
+  return map[currency] ?? currency;
+}
+
 const defaultData: InvoiceData = {
   docType: "invoice",
   companyName: "", companyAddress: "", companyCity: "", companyCountry: "United Arab Emirates",
@@ -154,6 +272,8 @@ const defaultData: InvoiceData = {
   template: 1, colorScheme: "navy",
 };
 
+// ─── useCalc ───────────────────────────────────────────────────────────────────
+
 function useCalc(data: InvoiceData) {
   const subtotal = data.items.reduce((s, i) => s + i.qty * i.unitPrice, 0);
   const vat = data.enableVat ? subtotal * (data.vatRate / 100) : 0;
@@ -161,9 +281,12 @@ function useCalc(data: InvoiceData) {
   return { subtotal, vat, total, words: numberToWords(Math.floor(total)) };
 }
 
-function TotalsBlock({ data, subtotal, vat, total, words, primaryBg, accentText, lightBg, borderColor }: {
+// ─── Shared Blocks ─────────────────────────────────────────────────────────────
+
+function TotalsBlock({ data, subtotal, vat, total, words, primaryBg, accentText, lightBg, borderColor, countryConfig }: {
   data: InvoiceData; subtotal: number; vat: number; total: number; words: string;
   primaryBg: string; accentText: string; lightBg: string; borderColor: string;
+  countryConfig: CountryConfig;
 }) {
   return (
     <div style={{ padding: "8px 48px 0", display: "flex", justifyContent: "flex-end" }}>
@@ -173,7 +296,8 @@ function TotalsBlock({ data, subtotal, vat, total, words, primaryBg, accentText,
         </div>
         {data.enableVat && (
           <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", fontSize: 13, color: "#555", borderBottom: `0.5px solid ${borderColor}` }}>
-            <span>VAT {data.vatRate}%</span><span>{formatCurrency(vat, data.currency)}</span>
+            <span>{countryConfig.vatLabel} {data.vatRate}%</span>
+            <span>{formatCurrency(vat, data.currency)}</span>
           </div>
         )}
         <div style={{ display: "flex", justifyContent: "space-between", background: primaryBg, color: "white", borderRadius: 8, padding: "13px 18px", marginTop: 10, fontSize: 16, fontWeight: 800 }}>
@@ -181,7 +305,7 @@ function TotalsBlock({ data, subtotal, vat, total, words, primaryBg, accentText,
           <span style={{ color: accentText }}>{formatCurrency(total, data.currency)}</span>
         </div>
         <div style={{ marginTop: 10, fontSize: 11, fontStyle: "italic", color: "#777", background: lightBg, padding: "8px 14px", borderRadius: 6 }}>
-          In Words: {words} {data.currency === "AED" ? "Dirhams" : data.currency} Only
+          In Words: {words} {getCurrencyWord(data.currency)} Only
         </div>
       </div>
     </div>
@@ -224,8 +348,6 @@ function SignatureBlock({ accentColor }: { accentColor: string }) {
   );
 }
 
-interface CardData { t: string; name: string; addr: string; extra?: string; trn: string; }
-
 function Watermark() {
   return (
     <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 9999, overflow: "hidden" }}>
@@ -238,14 +360,18 @@ function Watermark() {
   );
 }
 
-function Template1({ data, isGuest }: { data: InvoiceData; isGuest: boolean }) {
+interface CardData { t: string; name: string; addr: string; extra?: string; trn: string; trnLabel: string; }
+
+// ─── Templates ─────────────────────────────────────────────────────────────────
+
+function Template1({ data, isGuest, countryConfig }: { data: InvoiceData; isGuest: boolean; countryConfig: CountryConfig }) {
   const calc = useCalc(data);
   const cfg = DOC_CONFIG[data.docType];
   const cs = COLOR_SCHEMES[1][data.colorScheme] ?? COLOR_SCHEMES[1].navy;
   const { primary: P, accent: A, light: L, headerText: HT } = cs;
   const cards: CardData[] = [
-    { t: `${cfg.fromLabel} — ${cfg.fromLabelAr}`, name: data.companyName, addr: data.companyAddress + (data.companyCity ? `, ${data.companyCity}` : ""), extra: data.companyCountry, trn: cfg.showTRN ? data.companyTRN : "" },
-    { t: `${cfg.toLabel} — ${cfg.toLabelAr}`, name: data.clientName, addr: data.clientAddress, extra: data.clientCity, trn: cfg.showTRN ? data.clientTRN : "" },
+    { t: `${cfg.fromLabel} — ${cfg.fromLabelAr}`, name: data.companyName, addr: data.companyAddress + (data.companyCity ? `, ${data.companyCity}` : ""), extra: data.companyCountry, trn: cfg.showTRN ? data.companyTRN : "", trnLabel: countryConfig.taxNumberLabel },
+    { t: `${cfg.toLabel} — ${cfg.toLabelAr}`, name: data.clientName, addr: data.clientAddress, extra: data.clientCity, trn: cfg.showTRN ? data.clientTRN : "", trnLabel: countryConfig.taxNumberLabel },
   ];
   return (
     <div style={{ background: "white", fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 13, minHeight: "297mm", width: "210mm", display: "flex", flexDirection: "column" }}>
@@ -263,7 +389,7 @@ function Template1({ data, isGuest }: { data: InvoiceData; isGuest: boolean }) {
         <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: 26, fontWeight: 900, color: P, lineHeight: 1 }}>{cfg.label}</div>
           <div style={{ fontSize: 10, color: A, letterSpacing: 3, marginTop: 4 }}>{cfg.labelAr}</div>
-          <div style={{ marginTop: 12, fontSize: 13, fontWeight: 700, color: A }}>{data.docNumber}</div>
+          <div style={{ marginTop: 6, fontSize: 13, fontWeight: 700, color: A }}>{data.docNumber}</div>
           <div style={{ fontSize: 11, color: "#888", marginTop: 3 }}>Date: {formatDate(data.docDate)}</div>
           {data.dueDate && <div style={{ fontSize: 11, color: "#888" }}>{cfg.dueDateLabel}: {formatDate(data.dueDate)}</div>}
         </div>
@@ -274,7 +400,7 @@ function Template1({ data, isGuest }: { data: InvoiceData; isGuest: boolean }) {
             <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: 2, color: A, fontWeight: 700, marginBottom: 8 }}>{c.t}</div>
             <div style={{ fontWeight: 700, fontSize: 14, color: P }}>{c.name || "—"}</div>
             <div style={{ fontSize: 12, color: "#555", lineHeight: 1.7, marginTop: 4 }}>{c.addr}{c.extra ? <><br />{c.extra}</> : ""}</div>
-            {c.trn && <div style={{ marginTop: 8, fontSize: 10, color: A, fontWeight: 600 }}>TRN: <span style={{ fontFamily: "monospace" }}>{c.trn}</span></div>}
+            {c.trn && <div style={{ marginTop: 8, fontSize: 10, color: A, fontWeight: 600 }}>{c.trnLabel}: <span style={{ fontFamily: "monospace" }}>{c.trn}</span></div>}
           </div>
         ))}
       </div>
@@ -300,24 +426,23 @@ function Template1({ data, isGuest }: { data: InvoiceData; isGuest: boolean }) {
           </tbody>
         </table>
       </div>
-      <TotalsBlock data={data} {...calc} primaryBg={P} accentText={HT} lightBg={L} borderColor="#dde4f0" />
+      <TotalsBlock data={data} {...calc} primaryBg={P} accentText={HT} lightBg={L} borderColor="#dde4f0" countryConfig={countryConfig} />
       {cfg.showBank && <BankBlock data={data} borderColor={L} labelColor={P} />}
       <NotesBlock data={data} borderColor="#e5e7eb" />
       <SignatureBlock accentColor={A} />
-      <div style={{ marginTop: "auto", background: P, color: HT, padding: "12px 48px", fontSize: 10 }}>{cfg.footerNote}</div>
       {isGuest && <Watermark />}
     </div>
   );
 }
 
-function Template2({ data, isGuest }: { data: InvoiceData; isGuest: boolean }) {
+function Template2({ data, isGuest, countryConfig }: { data: InvoiceData; isGuest: boolean; countryConfig: CountryConfig }) {
   const calc = useCalc(data);
   const cfg = DOC_CONFIG[data.docType];
   const cs = COLOR_SCHEMES[2][data.colorScheme] ?? COLOR_SCHEMES[2].red;
   const { primary: P, accent: A } = cs;
   const cards: CardData[] = [
-    { t: `${cfg.fromLabel} — ${cfg.fromLabelAr}`, name: data.companyName, addr: data.companyAddress + (data.companyCity ? `, ${data.companyCity}` : ""), extra: data.companyCountry, trn: cfg.showTRN ? data.companyTRN : "" },
-    { t: `${cfg.toLabel} — ${cfg.toLabelAr}`, name: data.clientName, addr: data.clientAddress, extra: data.clientCity, trn: cfg.showTRN ? data.clientTRN : "" },
+    { t: `${cfg.fromLabel} — ${cfg.fromLabelAr}`, name: data.companyName, addr: data.companyAddress + (data.companyCity ? `, ${data.companyCity}` : ""), extra: data.companyCountry, trn: cfg.showTRN ? data.companyTRN : "", trnLabel: countryConfig.taxNumberLabel },
+    { t: `${cfg.toLabel} — ${cfg.toLabelAr}`, name: data.clientName, addr: data.clientAddress, extra: data.clientCity, trn: cfg.showTRN ? data.clientTRN : "", trnLabel: countryConfig.taxNumberLabel },
   ];
   return (
     <div style={{ background: "white", fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 13, minHeight: "297mm", width: "210mm", display: "flex", flexDirection: "column" }}>
@@ -331,7 +456,7 @@ function Template2({ data, isGuest }: { data: InvoiceData; isGuest: boolean }) {
         <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: 28, fontWeight: 900, color: A }}>{cfg.label}</div>
           <div style={{ fontSize: 11, color: "#bbb", marginTop: -2 }}>{cfg.labelAr}</div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: P, marginTop: 8 }}>{data.docNumber}</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: P, marginTop: 6 }}>{data.docNumber}</div>
           <div style={{ fontSize: 11, color: "#95a5a6" }}>Date: {formatDate(data.docDate)}</div>
           {data.dueDate && <div style={{ fontSize: 11, color: "#95a5a6" }}>{cfg.dueDateLabel}: {formatDate(data.dueDate)}</div>}
         </div>
@@ -342,7 +467,7 @@ function Template2({ data, isGuest }: { data: InvoiceData; isGuest: boolean }) {
             <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: 2, color: A, fontWeight: 700, marginBottom: 8 }}>{c.t}</div>
             <div style={{ fontSize: 14, fontWeight: 700, color: P }}>{c.name || "—"}</div>
             <div style={{ fontSize: 12, color: "#666", lineHeight: 1.7, marginTop: 4 }}>{c.addr}{c.extra ? <><br />{c.extra}</> : ""}</div>
-            {c.trn && <div style={{ marginTop: 10, fontSize: 10, color: A, fontWeight: 600 }}>TRN: <span style={{ fontFamily: "monospace" }}>{c.trn}</span></div>}
+            {c.trn && <div style={{ marginTop: 10, fontSize: 10, color: A, fontWeight: 600 }}>{c.trnLabel}: <span style={{ fontFamily: "monospace" }}>{c.trn}</span></div>}
           </div>
         ))}
       </div>
@@ -368,24 +493,23 @@ function Template2({ data, isGuest }: { data: InvoiceData; isGuest: boolean }) {
           </tbody>
         </table>
       </div>
-      <TotalsBlock data={data} {...calc} primaryBg={A} accentText="white" lightBg="#f8f9fa" borderColor="#ecf0f1" />
+      <TotalsBlock data={data} {...calc} primaryBg={A} accentText="white" lightBg="#f8f9fa" borderColor="#ecf0f1" countryConfig={countryConfig} />
       {cfg.showBank && <BankBlock data={data} borderColor="#ecf0f1" labelColor={P} />}
       <NotesBlock data={data} borderColor="#ecf0f1" />
       <SignatureBlock accentColor={A} />
-      <div style={{ marginTop: "auto", borderTop: "0.5px solid #ecf0f1", padding: "12px 48px", fontSize: 10, color: "#bbb" }}>{cfg.footerNote}</div>
       {isGuest && <Watermark />}
     </div>
   );
 }
 
-function Template3({ data, isGuest }: { data: InvoiceData; isGuest: boolean }) {
+function Template3({ data, isGuest, countryConfig }: { data: InvoiceData; isGuest: boolean; countryConfig: CountryConfig }) {
   const calc = useCalc(data);
   const cfg = DOC_CONFIG[data.docType];
   const cs = COLOR_SCHEMES[3][data.colorScheme] ?? COLOR_SCHEMES[3].green;
   const { primary: P, accent: G, light: L } = cs;
   const cards: CardData[] = [
-    { t: `${cfg.fromLabel} — ${cfg.fromLabelAr}`, name: data.companyName, addr: `${data.companyAddress}\n${data.companyCity}${data.companyCountry ? `, ${data.companyCountry}` : ""}`, trn: cfg.showTRN ? data.companyTRN : "" },
-    { t: `${cfg.toLabel} — ${cfg.toLabelAr}`, name: data.clientName, addr: `${data.clientAddress}\n${data.clientCity}`, trn: cfg.showTRN ? data.clientTRN : "" },
+    { t: `${cfg.fromLabel} — ${cfg.fromLabelAr}`, name: data.companyName, addr: `${data.companyAddress}\n${data.companyCity}${data.companyCountry ? `, ${data.companyCountry}` : ""}`, trn: cfg.showTRN ? data.companyTRN : "", trnLabel: countryConfig.taxNumberLabel },
+    { t: `${cfg.toLabel} — ${cfg.toLabelAr}`, name: data.clientName, addr: `${data.clientAddress}\n${data.clientCity}`, trn: cfg.showTRN ? data.clientTRN : "", trnLabel: countryConfig.taxNumberLabel },
   ];
   return (
     <div style={{ background: "white", fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 13, minHeight: "297mm", width: "210mm", display: "flex", flexDirection: "column" }}>
@@ -401,7 +525,7 @@ function Template3({ data, isGuest }: { data: InvoiceData; isGuest: boolean }) {
         <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: 28, fontWeight: 900, color: P }}>{cfg.label}</div>
           <div style={{ fontSize: 10, color: G, letterSpacing: 2, marginTop: -2 }}>{cfg.labelAr}</div>
-          <div style={{ fontSize: 13, color: "#555", marginTop: 8 }}>{data.docNumber}</div>
+          <div style={{ fontSize: 13, color: "#555", marginTop: 6 }}>{data.docNumber}</div>
           <div style={{ fontSize: 11, color: "#888" }}>Date: {formatDate(data.docDate)}</div>
           {data.dueDate && <div style={{ fontSize: 11, color: "#888" }}>{cfg.dueDateLabel}: {formatDate(data.dueDate)}</div>}
         </div>
@@ -412,7 +536,7 @@ function Template3({ data, isGuest }: { data: InvoiceData; isGuest: boolean }) {
             <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: 1.5, color: P, fontWeight: 700, marginBottom: 8 }}>{c.t}</div>
             <div style={{ fontWeight: 700, fontSize: 14, color: P }}>{c.name || "—"}</div>
             <div style={{ fontSize: 12, color: "#555", lineHeight: 1.6, marginTop: 4, whiteSpace: "pre-line" }}>{c.addr}</div>
-            {c.trn && <div style={{ marginTop: 8, fontSize: 10, color: P, fontWeight: 600 }}>TRN: <span style={{ fontFamily: "monospace" }}>{c.trn}</span></div>}
+            {c.trn && <div style={{ marginTop: 8, fontSize: 10, color: P, fontWeight: 600 }}>{c.trnLabel}: <span style={{ fontFamily: "monospace" }}>{c.trn}</span></div>}
           </div>
         ))}
       </div>
@@ -438,16 +562,16 @@ function Template3({ data, isGuest }: { data: InvoiceData; isGuest: boolean }) {
           </tbody>
         </table>
       </div>
-      <TotalsBlock data={data} {...calc} primaryBg={P} accentText={G} lightBg={L} borderColor={L} />
+      <TotalsBlock data={data} {...calc} primaryBg={P} accentText={G} lightBg={L} borderColor={L} countryConfig={countryConfig} />
       {cfg.showBank && <BankBlock data={data} borderColor={`${G}44`} labelColor={P} />}
       <NotesBlock data={data} borderColor={`${G}44`} />
       <SignatureBlock accentColor={P} />
-      <div style={{ marginTop: "auto", borderTop: `2px solid ${P}`, padding: "12px 48px", fontSize: 10, color: "#aaa" }}>{cfg.footerNote}</div>
-      <div style={{ height: 6, background: `linear-gradient(90deg, ${G}, ${P}, ${G})` }} />
       {isGuest && <Watermark />}
     </div>
   );
 }
+
+// ─── Sidebar Helpers ───────────────────────────────────────────────────────────
 
 const inputCls = "w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition placeholder-gray-400";
 const labelCls = "block text-xs font-medium text-gray-500 mb-1";
@@ -488,6 +612,8 @@ const DOC_TYPES: { id: DocType; label: string; icon: string }[] = [
   { id: "lpo",       label: "Purchase Order", icon: "📦" },
 ];
 
+// ─── Main Component ────────────────────────────────────────────────────────────
+
 export default function InvoiceBuilder({ initialType }: { initialType: "invoice" | "quotation" | "lpo" }) {
   const router = useRouter();
   const supabase = createClient();
@@ -497,13 +623,42 @@ export default function InvoiceBuilder({ initialType }: { initialType: "invoice"
   const [plan, setPlan] = useState<"free" | "pro">("free");
   const [numberingStyle, setNumberingStyle] = useState<"simple" | "yearly">("simple");
   const [showReviewPopup, setShowReviewPopup] = useState(false);
-const [rating, setRating] = useState(0);
-const [reviewComment, setReviewComment] = useState("");
-const [reviewName, setReviewName] = useState("");
-const [reviewRole, setReviewRole] = useState("");
-const [submittingReview, setSubmittingReview] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewName, setReviewName] = useState("");
+  const [reviewRole, setReviewRole] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
 
-  // ─── دالة مساعدة لجلب الـ counter field حسب نوع الوثيقة ───────────────────
+  // ✅ Country State
+  const [countryConfig, setCountryConfig] = useState<CountryConfig>(COUNTRY_CONFIG.AE);
+  const [detectingCountry, setDetectingCountry] = useState(true);
+
+  // ─── IP Detection ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    const detectCountry = async () => {
+      try {
+        const res = await fetch("https://ipapi.co/json/");
+        const ipData = await res.json();
+        const code = ipData.country_code as CountryCode;
+        const cfg = COUNTRY_CONFIG[code];
+        if (cfg) {
+          setCountryConfig(cfg);
+          setData((prev) => ({
+            ...prev,
+            currency: cfg.currency,
+            vatRate: cfg.vatRate,
+            companyCountry: cfg.defaultCountry,
+          }));
+        }
+      } catch {
+        // fallback to UAE
+      } finally {
+        setDetectingCountry(false);
+      }
+    };
+    detectCountry();
+  }, []);
+
   const getCounterField = (docType: DocType) =>
     docType === "invoice" ? "invoice_counter" :
     docType === "quotation" ? "quotation_counter" : "lpo_counter";
@@ -511,24 +666,13 @@ const [submittingReview, setSubmittingReview] = useState(false);
   const getPrefix = (docType: DocType) =>
     docType === "invoice" ? "INV" : docType === "quotation" ? "QT" : "PO";
 
-  // ─── تحميل البيانات عند الدخول ────────────────────────────────────────────
   useEffect(() => {
     const loadProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        setIsGuest(true);
-        return;
-      }
+      if (!user) { setIsGuest(true); return; }
       setIsGuest(false);
 
-      // جلب بيانات الشركة
-      const { data: company } = await supabase
-        .from("companies")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
-
+      const { data: company } = await supabase.from("companies").select("*").eq("user_id", user.id).single();
       if (company) {
         setData((prev) => ({
           ...prev,
@@ -544,7 +688,6 @@ const [submittingReview, setSubmittingReview] = useState(false);
         }));
       }
 
-      // جلب البروفايل والـ counter
       const counterField = getCounterField(initialType);
       const { data: profile } = await supabase
         .from("profiles")
@@ -556,9 +699,7 @@ const [submittingReview, setSubmittingReview] = useState(false);
         const style = (profile.numbering_style as "simple" | "yearly") ?? "simple";
         setPlan(profile.plan);
         setNumberingStyle(style);
-
-        // ✅ عرض الرقم التالي تلقائياً بناءً على الـ counter الحالي
-const currentCounter = ((profile as Record<string, unknown>)[counterField] as number) ?? 0;
+        const currentCounter = ((profile as Record<string, unknown>)[counterField] as number) ?? 0;
         const prefix = getPrefix(initialType);
         setData((prev) => ({
           ...prev,
@@ -566,13 +707,24 @@ const currentCounter = ((profile as Record<string, unknown>)[counterField] as nu
         }));
       }
     };
-
     loadProfile();
   }, []);
 
   const set = useCallback(<K extends keyof InvoiceData>(key: K, value: InvoiceData[K]) => {
     setData((prev) => ({ ...prev, [key]: value }));
   }, []);
+
+  // ✅ تغيير البلد يدوياً
+  const handleCountryChange = (code: CountryCode) => {
+    const cfg = COUNTRY_CONFIG[code];
+    setCountryConfig(cfg);
+    setData((prev) => ({
+      ...prev,
+      currency: cfg.currency,
+      vatRate: cfg.vatRate,
+      companyCountry: cfg.defaultCountry,
+    }));
+  };
 
   const setDocType = (dt: DocType) => {
     const cfg = DOC_CONFIG[dt];
@@ -613,15 +765,9 @@ const currentCounter = ((profile as Record<string, unknown>)[counterField] as nu
   const handlePrint = async () => {
     const { data: { user } } = await supabase.auth.getUser();
 
-    // ─── فحص الحد اليومي للـ free plan ───────────────────────────────────────
     if (user && plan === "free") {
       const today = new Date().toISOString().split("T")[0];
-      const { count } = await supabase
-        .from("documents")
-        .select("id", { count: "exact" })
-        .eq("user_id", user.id)
-        .gte("created_at", today);
-
+      const { count } = await supabase.from("documents").select("id", { count: "exact" }).eq("user_id", user.id).gte("created_at", today);
       if (count && count >= 1) {
         alert("You have reached your daily limit. Upgrade to Pro for unlimited documents.");
         return;
@@ -629,7 +775,6 @@ const currentCounter = ((profile as Record<string, unknown>)[counterField] as nu
     }
 
     if (user) {
-      // ─── حفظ الوثيقة ───────────────────────────────────────────────────────
       await supabase.from("documents").insert({
         user_id: user.id,
         doc_type: data.docType,
@@ -638,40 +783,17 @@ const currentCounter = ((profile as Record<string, unknown>)[counterField] as nu
         total: data.items.reduce((s, i) => s + i.qty * i.unitPrice, 0),
       });
 
-      // ─── تحديث الـ counter بشكل صحيح ──────────────────────────────────────
       const counterField = getCounterField(data.docType);
       const prefix = getPrefix(data.docType);
 
-      // جيب الـ counter الحالي
-      const { data: currentProfile } = await supabase
-        .from("profiles")
-        .select(counterField)
-        .eq("id", user.id)
-        .single();
-
-      const { data: profileData } = await supabase
-  .from("profiles")
-  .select(counterField)
-  .eq("id", user.id)
-  .single();
-
-const currentCounter = (profileData as Record<string, number> | null)?.[counterField] ?? 0;
+      const { data: profileData } = await supabase.from("profiles").select(counterField).eq("id", user.id).single();
+      const currentCounter = (profileData as Record<string, number> | null)?.[counterField] ?? 0;
       const nextCounter = currentCounter + 1;
 
-      // حفظ الـ counter الجديد
-      await supabase
-        .from("profiles")
-        .update({ [counterField]: nextCounter })
-        .eq("id", user.id);
-
-      // ✅ جهز رقم الوثيقة التالية (للمرة القادمة)
-      setData((prev) => ({
-        ...prev,
-        docNumber: generateDocNumber(prefix, nextCounter + 1, numberingStyle),
-      }));
+      await supabase.from("profiles").update({ [counterField]: nextCounter }).eq("id", user.id);
+      setData((prev) => ({ ...prev, docNumber: generateDocNumber(prefix, nextCounter + 1, numberingStyle) }));
     }
 
-    // ─── الطباعة ───────────────────────────────────────────────────────────────
     const content = printRef.current?.innerHTML;
     if (!content) return;
     const win = window.open("", "_blank");
@@ -689,26 +811,15 @@ const currentCounter = (profileData as Record<string, number> | null)?.[counterF
     win.focus();
     setTimeout(() => { win.print(); win.close(); }, 300);
 
-// شوف لو اليوزر عمل review قبل كده
-const { data: profileData } = await supabase
-  .from("profiles")
-  .select("last_review_at")
-  .eq("id", user?.id)
-  .single();
-
-const lastReview = profileData?.last_review_at;
-const twoWeeksAgo = new Date();
-twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-
-const shouldAskReview = !lastReview || new Date(lastReview) < twoWeeksAgo;
-
-if (shouldAskReview) {
-  setShowReviewPopup(true);
-} else {
-  router.push("/dashboard");
-}    
+    if (user) {
+      const { data: profileData } = await supabase.from("profiles").select("last_review_at").eq("id", user.id).single();
+      const lastReview = profileData?.last_review_at;
+      const twoWeeksAgo = new Date();
+      twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+      const shouldAskReview = !lastReview || new Date(lastReview) < twoWeeksAgo;
+      if (shouldAskReview) { setShowReviewPopup(true); } else { router.push("/dashboard"); }
+    }
   };
-  
 
   const TemplateComponent = data.template === 1 ? Template1 : data.template === 2 ? Template2 : Template3;
   const cfg = DOC_CONFIG[data.docType];
@@ -721,10 +832,52 @@ if (shouldAskReview) {
       <aside className="w-[320px] min-w-[320px] bg-white border-r border-gray-100 flex flex-col overflow-hidden shadow-sm">
         <div className="px-5 pt-5 pb-3 border-b border-gray-100">
           <div className="text-base font-bold text-gray-900">Document Builder</div>
-          <div className="text-xs text-gray-400 mt-0.5">UAE Professional Documents · الإمارات</div>
+          <div className="text-xs text-gray-400 mt-0.5">Professional Documents</div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
+
+  {/* ✅ Country Selector */}
+<Section title="Country / الدولة">
+
+  <div>
+    <label className={labelCls}>Select Country</label>
+
+    <select
+      className={`${inputCls} text-gray-800 bg-white`}
+      value={countryConfig.code}
+      onChange={(e) =>
+        handleCountryChange(e.target.value as CountryCode)
+      }
+    >
+      {Object.values(COUNTRY_CONFIG).map((c) => (
+        <option key={c.code} value={c.code}>
+          {c.flag} {c.name}
+        </option>
+      ))}
+    </select>
+  </div>
+
+  {detectingCountry ? (
+    <p className="text-[10px] text-gray-400 text-center mt-2">
+      📍 Detecting your location...
+    </p>
+  ) : (
+    <div className="flex items-center justify-center gap-2 bg-gray-50 rounded-lg py-2 px-3 mt-2 border border-gray-100">
+      <span className="text-lg">{countryConfig.flag}</span>
+
+      <div className="text-[11px] text-gray-500 text-center">
+        <div className="font-medium text-gray-700">
+          {countryConfig.name}
+        </div>
+
+        <div>
+          {countryConfig.currency} · {countryConfig.vatLabel} {countryConfig.vatRate}%
+        </div>
+      </div>
+    </div>
+  )}
+</Section>
 
           <Section title="Document Type">
             <div className="grid grid-cols-3 gap-2">
@@ -779,10 +932,17 @@ if (shouldAskReview) {
             <Field label="Company Name *" value={data.companyName} onChange={(v) => set("companyName", v)} placeholder="Your company name" />
             <Field label="Address" value={data.companyAddress} onChange={(v) => set("companyAddress", v)} placeholder="Street, building" />
             <div className="grid grid-cols-2 gap-2">
-              <Field label="City" value={data.companyCity} onChange={(v) => set("companyCity", v)} placeholder="Dubai" />
-              <Field label="Country" value={data.companyCountry} onChange={(v) => set("companyCountry", v)} placeholder="UAE" />
+              <Field label="City" value={data.companyCity} onChange={(v) => set("companyCity", v)} placeholder={countryConfig.defaultCity} />
+              <Field label="Country" value={data.companyCountry} onChange={(v) => set("companyCountry", v)} placeholder={countryConfig.defaultCountry} />
             </div>
-            {cfg.showTRN && <Field label="TRN *" value={data.companyTRN} onChange={(v) => set("companyTRN", v)} placeholder="100234567890003" />}
+            {cfg.showTRN && (
+              <Field
+                label={`${countryConfig.taxNumberLabel} *`}
+                value={data.companyTRN}
+                onChange={(v) => set("companyTRN", v)}
+                placeholder={countryConfig.taxNumberPlaceholder}
+              />
+            )}
             <Field label="Phone" value={data.companyPhone} onChange={(v) => set("companyPhone", v)} placeholder="+971 4 123 4567" />
             <Field label="Email" value={data.companyEmail} onChange={(v) => set("companyEmail", v)} placeholder="info@company.ae" />
             <Field label="Website" value={data.companyWebsite} onChange={(v) => set("companyWebsite", v)} placeholder="www.company.ae" />
@@ -791,18 +951,24 @@ if (shouldAskReview) {
           <Section title={data.docType === "lpo" ? "Vendor Info" : "Client Info"}>
             <Field label={`${cfg.toLabel} Name *`} value={data.clientName} onChange={(v) => set("clientName", v)} placeholder="Name" />
             <Field label="Address" value={data.clientAddress} onChange={(v) => set("clientAddress", v)} placeholder="Address" />
-            <Field label="City" value={data.clientCity} onChange={(v) => set("clientCity", v)} placeholder="Abu Dhabi" />
-            {cfg.showTRN && <Field label="TRN" value={data.clientTRN} onChange={(v) => set("clientTRN", v)} placeholder="TRN (if applicable)" />}
+            <Field label="City" value={data.clientCity} onChange={(v) => set("clientCity", v)} placeholder={countryConfig.defaultCity} />
+            {cfg.showTRN && (
+              <Field
+                label={countryConfig.taxNumberLabel}
+                value={data.clientTRN}
+                onChange={(v) => set("clientTRN", v)}
+                placeholder={`${countryConfig.taxNumberLabel} (if applicable)`}
+              />
+            )}
           </Section>
 
           <Section title="Document Details">
-            {/* ✅ رقم الوثيقة read-only  */}
             <div>
               <label className={labelCls}>{cfg.numberLabel}</label>
               <div className="w-full px-3 py-2 text-sm border border-gray-100 rounded-lg bg-gray-50 text-gray-600 font-mono tracking-wide select-none cursor-not-allowed">
                 {data.docNumber}
               </div>
-              <p className="text-[10px] text-gray-400 mt-1">🔒 </p>
+              <p className="text-[10px] text-gray-400 mt-1">🔒 Auto-generated</p>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <Field label="Date" value={data.docDate} onChange={(v) => set("docDate", v)} type="date" />
@@ -812,7 +978,7 @@ if (shouldAskReview) {
               <div>
                 <label className={labelCls}>Currency</label>
                 <select className={inputCls} value={data.currency} onChange={(e) => set("currency", e.target.value)}>
-                  {["AED", "USD", "EUR", "GBP", "SAR"].map((c) => <option key={c} value={c}>{c}</option>)}
+                  {["AED", "SAR", "USD", "EUR", "GBP"].map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div>
@@ -823,12 +989,12 @@ if (shouldAskReview) {
                       className={`w-full py-2 rounded-lg border text-xs font-semibold transition-all ${
                         data.enableVat ? "bg-green-50 border-green-400 text-green-700" : "bg-gray-50 border-gray-200 text-gray-400"
                       }`}>
-                      {data.enableVat ? `✓ VAT ${data.vatRate}%` : "VAT Off"}
+                      {data.enableVat ? `✓ ${countryConfig.vatLabel} ${data.vatRate}%` : "VAT Off"}
                     </button>
                   </>
                 ) : (
                   <>
-                    <label className={labelCls}>VAT Rate (%)</label>
+                    <label className={labelCls}>{countryConfig.vatLabel} Rate (%)</label>
                     <input type="number" className={inputCls} value={data.vatRate} min={0} max={100} step={0.5}
                       onChange={(e) => set("vatRate", parseFloat(e.target.value) || 0)} />
                   </>
@@ -836,7 +1002,7 @@ if (shouldAskReview) {
               </div>
             </div>
             {cfg.vatOptional && data.enableVat && (
-              <Field label="VAT Rate (%)" value={String(data.vatRate)} onChange={(v) => set("vatRate", parseFloat(v) || 0)} placeholder="5" />
+              <Field label={`${countryConfig.vatLabel} Rate (%)`} value={String(data.vatRate)} onChange={(v) => set("vatRate", parseFloat(v) || 0)} placeholder={String(countryConfig.vatRate)} />
             )}
           </Section>
 
@@ -890,143 +1056,79 @@ if (shouldAskReview) {
           </Section>
 
         </div>
-{/* Review Popup */}
-{showReviewPopup && (
-  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
 
-      <div className="text-center mb-6">
-        <div className="text-3xl mb-3">🌟</div>
-        <h3 className="text-xl font-bold text-gray-900 mb-1">How was your experience?</h3>
-        <p className="text-gray-500 text-sm">Your feedback helps us improve DOCUVAT</p>
-      </div>
+        {/* Review Popup */}
+        {showReviewPopup && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
+              <div className="text-center mb-6">
+                <div className="text-3xl mb-3">🌟</div>
+                <h3 className="text-xl font-bold text-gray-900 mb-1">How was your experience?</h3>
+                <p className="text-gray-500 text-sm">Your feedback helps us improve DOCUVAT</p>
+              </div>
+              <div className="flex justify-center gap-2 mb-6">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button key={star} onClick={() => setRating(star)} className="text-3xl transition-transform hover:scale-110">
+                    {star <= rating ? "⭐" : "☆"}
+                  </button>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Your Name</label>
+                  <input className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ahmed Al-Rashid" value={reviewName} onChange={(e) => setReviewName(e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Role / Business</label>
+                  <input className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Consultant, Dubai" value={reviewRole} onChange={(e) => setReviewRole(e.target.value)} />
+                </div>
+              </div>
+              <div className="mb-5">
+                <label className="block text-xs font-medium text-gray-500 mb-1">Comment (optional)</label>
+                <textarea className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" rows={3} placeholder="What did you like about DOCUVAT?" value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} />
+              </div>
+              <div className="flex flex-col gap-2">
+                <button
+                  disabled={rating === 0 || submittingReview}
+                  onClick={async () => {
+                    if (rating === 0) return;
+                    setSubmittingReview(true);
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (!user) return;
+                    await supabase.from("reviews").insert({ user_id: user.id, rating, comment: reviewComment, user_name: reviewName, user_role: reviewRole });
+                    await supabase.from("profiles").update({ last_review_at: new Date().toISOString() }).eq("id", user.id);
+                    setSubmittingReview(false);
+                    setShowReviewPopup(false);
+                    router.push("/dashboard");
+                  }}
+                  className="w-full py-3 bg-gradient-to-r from-blue-500 to-emerald-500 text-white font-semibold rounded-xl disabled:opacity-40 transition-all"
+                >
+                  {submittingReview ? "Submitting..." : "Submit Review"}
+                </button>
+                <button onClick={() => { setShowReviewPopup(false); router.push("/dashboard"); }} className="w-full py-2.5 text-gray-400 text-sm hover:text-gray-600 transition-colors">
+                  Skip for now
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
-      {/* Stars */}
-      <div className="flex justify-center gap-2 mb-6">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <button
-            key={star}
-            onClick={() => setRating(star)}
-            className="text-3xl transition-transform hover:scale-110"
-          >
-            {star <= rating ? "⭐" : "☆"}
-          </button>
-        ))}
-      </div>
-
-      {/* Name & Role */}
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Your Name</label>
-          <input
-            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Ahmed Al-Rashid"
-            value={reviewName}
-            onChange={(e) => setReviewName(e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Role / Business</label>
-          <input
-            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Consultant, Dubai"
-            value={reviewRole}
-            onChange={(e) => setReviewRole(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Comment */}
-      <div className="mb-5">
-        <label className="block text-xs font-medium text-gray-500 mb-1">Comment (optional)</label>
-        <textarea
-          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-          rows={3}
-          placeholder="What did you like about DOCUVAT?"
-          value={reviewComment}
-          onChange={(e) => setReviewComment(e.target.value)}
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <button
-          disabled={rating === 0 || submittingReview}
-          onClick={async () => {
-            if (rating === 0) return;
-            setSubmittingReview(true);
-
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-
-            await supabase.from("reviews").insert({
-              user_id: user.id,
-              rating,
-              comment: reviewComment,
-              user_name: reviewName,
-              user_role: reviewRole,
-            });
-
-            await supabase.from("profiles")
-              .update({ last_review_at: new Date().toISOString() })
-              .eq("id", user.id);
-
-            setSubmittingReview(false);
-            setShowReviewPopup(false);
-            router.push("/dashboard");
-          }}
-          className="w-full py-3 bg-gradient-to-r from-blue-500 to-emerald-500 text-white font-semibold rounded-xl disabled:opacity-40 transition-all"
-        >
-          {submittingReview ? "Submitting..." : "Submit Review"}
-        </button>
-
-        <button
-          onClick={() => {
-            setShowReviewPopup(false);
-            router.push("/dashboard");
-          }}
-          className="w-full py-2.5 text-gray-400 text-sm hover:text-gray-600 transition-colors"
-        >
-          Skip for now
-        </button>
-      </div>
-
-    </div>
-  </div>
-)}
         <div className="p-4 border-t border-gray-100">
           <button
             onClick={async () => {
               const { data: { user } } = await supabase.auth.getUser();
               if (!user) return;
-              const { data: existing } = await supabase
-                .from("companies").select("id").eq("user_id", user.id).single();
-              const companyData = {
-                user_id: user.id,
-                name: data.companyName,
-                address: data.companyAddress,
-                city: data.companyCity,
-                country: data.companyCountry,
-                phone: data.companyPhone,
-                email: data.companyEmail,
-                website: data.companyWebsite,
-                trn: data.companyTRN,
-              };
-              if (existing) {
-                await supabase.from("companies").update(companyData).eq("id", existing.id);
-              } else {
-                await supabase.from("companies").insert(companyData);
-              }
+              const { data: existing } = await supabase.from("companies").select("id").eq("user_id", user.id).single();
+              const companyData = { user_id: user.id, name: data.companyName, address: data.companyAddress, city: data.companyCity, country: data.companyCountry, phone: data.companyPhone, email: data.companyEmail, website: data.companyWebsite, trn: data.companyTRN };
+              if (existing) { await supabase.from("companies").update(companyData).eq("id", existing.id); }
+              else { await supabase.from("companies").insert(companyData); }
               alert("Company profile saved!");
             }}
             className="w-full py-2.5 mb-2 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-100 transition-all"
           >
             💾 Save Company Profile
           </button>
-
-          <button
-            onClick={handlePrint}
-            className="w-full py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 active:scale-[0.98] transition-all"
-          >
+          <button onClick={handlePrint} className="w-full py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 active:scale-[0.98] transition-all">
             🖨 Export / Print PDF
           </button>
         </div>
@@ -1036,7 +1138,9 @@ if (shouldAskReview) {
       <main className="flex-1 overflow-y-auto bg-gray-100 p-6">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center justify-between mb-4">
-            <div className="text-xs text-gray-400 font-medium tracking-wide uppercase">Live Preview — {cfg.label}</div>
+            <div className="text-xs text-gray-400 font-medium tracking-wide uppercase">
+              Live Preview — {cfg.label} · {countryConfig.flag} {countryConfig.name}
+            </div>
             <div className="flex gap-2">
               {TEMPLATES.map((t) => (
                 <button key={t.id} onClick={() => setTemplate(t.id)}
@@ -1049,7 +1153,7 @@ if (shouldAskReview) {
             </div>
           </div>
           <div ref={printRef} className="shadow-xl rounded-lg overflow-hidden">
-            <TemplateComponent data={data} isGuest={isGuest} />
+            <TemplateComponent data={data} isGuest={isGuest} countryConfig={countryConfig} />
           </div>
         </div>
       </main>
