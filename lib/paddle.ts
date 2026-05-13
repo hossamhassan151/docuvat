@@ -1,26 +1,24 @@
 "use client";
 
-import { Paddle } from "@paddle/paddle-js";
+import { initializePaddle as initPaddle } from "@paddle/paddle-js";
 
-declare global {
-  interface Window {
-    Paddle?: Paddle;
-  }
-}
-
-const PADDLE_CLIENT_TOKEN = process.env
-  .NEXT_PUBLIC_PADDLE_CLIENT_TOKEN as string;
+let paddleInstance: Awaited<ReturnType<typeof initPaddle>> | null = null;
 
 export async function initializePaddle() {
   if (typeof window === "undefined") return null;
 
-  const { initializePaddle: initPaddle } = await import(
-    "@paddle/paddle-js"
-  );
+  if (paddleInstance) return paddleInstance;
 
-  const paddle = await initPaddle({
-    token: PADDLE_CLIENT_TOKEN,
+  const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
+
+  if (!token) {
+    console.error("Missing Paddle token");
+    return null;
+  }
+
+  paddleInstance = await initPaddle({
+    token,
   });
 
-  return paddle;
+  return paddleInstance;
 }
