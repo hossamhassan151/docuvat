@@ -1,65 +1,140 @@
 import { NextRequest, NextResponse } from "next/server";
-const { Resend } = require("resend");
+import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: NextRequest) {
   try {
-    const { to, docNumber, docType, total, currency, companyName } = await req.json();
+    const body = await req.json();
+
+    const {
+      to,
+      docNumber,
+      docType,
+      total,
+      currency,
+      companyName,
+    } = body;
+
+    if (!to || !docNumber || !docType) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    const documentTitle =
+      docType === "invoice"
+        ? "Tax Invoice"
+        : docType === "quotation"
+        ? "Quotation"
+        : "Purchase Order";
 
     const { data, error } = await resend.emails.send({
       from: "DOCUVAT <noreply@docuvat.com>",
       to: [to],
-      subject: `${docType === "invoice" ? "Tax Invoice" : docType === "quotation" ? "Quotation" : "Purchase Order"} ${docNumber} from ${companyName}`,
+      subject: `${documentTitle} ${docNumber} from ${companyName}`,
+
       html: `
-        <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; padding: 40px 20px;">
-          <div style="background: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 24px rgba(0,0,0,0.06);">
-            
-            <div style="text-align: center; margin-bottom: 32px;">
-              <div style="background: linear-gradient(135deg, #3b82f6, #10b981); display: inline-block; padding: 12px 20px; border-radius: 12px; margin-bottom: 16px;">
-                <span style="color: white; font-size: 20px; font-weight: 800; letter-spacing: 1px;">DOCUVAT</span>
+        <div style="font-family:Segoe UI,sans-serif;background:#f8fafc;padding:40px 20px;">
+          <div style="max-width:600px;margin:auto;background:white;border-radius:18px;padding:40px;box-shadow:0 4px 30px rgba(0,0,0,.06);">
+
+            <div style="text-align:center;margin-bottom:32px;">
+              <div style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#10b981);padding:12px 20px;border-radius:14px;">
+                <span style="color:white;font-size:20px;font-weight:800;letter-spacing:1px;">
+                  DOCUVAT
+                </span>
               </div>
-              <h1 style="color: #1e293b; font-size: 22px; font-weight: 700; margin: 0;">
-                ${docType === "invoice" ? "Tax Invoice" : docType === "quotation" ? "Quotation" : "Purchase Order"}
+
+              <h1 style="margin-top:20px;color:#0f172a;font-size:24px;font-weight:800;">
+                ${documentTitle}
               </h1>
+
+              <p style="color:#64748b;font-size:14px;margin-top:8px;">
+                Professional business document generated securely
+              </p>
             </div>
 
-            <div style="background: #f1f5f9; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
-              <table style="width: 100%; border-collapse: collapse;">
+            <div style="background:#f1f5f9;border-radius:14px;padding:24px;margin-bottom:28px;">
+              <table style="width:100%;border-collapse:collapse;">
+
                 <tr>
-                  <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Document Number</td>
-                  <td style="padding: 8px 0; color: #1e293b; font-size: 14px; font-weight: 600; text-align: right;">${docNumber}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #64748b; font-size: 14px;">From</td>
-                  <td style="padding: 8px 0; color: #1e293b; font-size: 14px; font-weight: 600; text-align: right;">${companyName}</td>
-                </tr>
-                <tr style="border-top: 1px solid #e2e8f0;">
-                  <td style="padding: 16px 0 8px; color: #1e293b; font-size: 18px; font-weight: 700;">Total Amount</td>
-                  <td style="padding: 16px 0 8px; color: #3b82f6; font-size: 18px; font-weight: 800; text-align: right;">
-                    ${Number(total).toLocaleString("en-AE", { minimumFractionDigits: 2 })} ${currency}
+                  <td style="padding:10px 0;color:#64748b;font-size:14px;">
+                    Document Number
+                  </td>
+
+                  <td style="padding:10px 0;text-align:right;color:#0f172a;font-size:14px;font-weight:700;">
+                    ${docNumber}
                   </td>
                 </tr>
+
+                <tr>
+                  <td style="padding:10px 0;color:#64748b;font-size:14px;">
+                    Company
+                  </td>
+
+                  <td style="padding:10px 0;text-align:right;color:#0f172a;font-size:14px;font-weight:700;">
+                    ${companyName || "DOCUVAT Client"}
+                  </td>
+                </tr>
+
+                <tr style="border-top:1px solid #e2e8f0;">
+                  <td style="padding-top:18px;color:#0f172a;font-size:18px;font-weight:800;">
+                    Total Amount
+                  </td>
+
+                  <td style="padding-top:18px;text-align:right;color:#3b82f6;font-size:20px;font-weight:900;">
+                    ${Number(total || 0).toLocaleString("en-AE", {
+                      minimumFractionDigits: 2,
+                    })} ${currency || "AED"}
+                  </td>
+                </tr>
+
               </table>
             </div>
 
-            <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
-              Please find your document attached. For any questions, please contact <strong>${companyName}</strong> directly.
+            <p style="color:#475569;font-size:14px;line-height:1.8;margin-bottom:28px;">
+              Your document has been generated successfully using DOCUVAT.
+              Please review the attached file carefully and contact the sender
+              directly for any additional details or modifications.
             </p>
 
-            <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; text-align: center;">
-              <p style="color: #94a3b8; font-size: 12px; margin: 0;">
-                Generated by <a href="https://www.docuvat.com" style="color: #3b82f6; text-decoration: none;">DOCUVAT</a> · UAE VAT Compliant Documents
+            <div style="padding-top:24px;border-top:1px solid #e2e8f0;text-align:center;">
+              <p style="font-size:12px;color:#94a3b8;margin:0;">
+                Generated with
+                <a href="https://www.docuvat.com"
+                  style="color:#3b82f6;text-decoration:none;font-weight:600;">
+                  DOCUVAT
+                </a>
+                · Smart Business Documents Platform
               </p>
             </div>
+
           </div>
         </div>
       `,
     });
 
-    if (error) return NextResponse.json({ error }, { status: 400 });
-    return NextResponse.json({ success: true, data });
+    if (error) {
+      console.error("RESEND ERROR:", error);
+
+      return NextResponse.json(
+        { error: "Email sending failed" },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      data,
+    });
+
   } catch (err) {
-    return NextResponse.json({ error: "Failed to send email" }, { status: 500 });
+    console.error("SERVER ERROR:", err);
+
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
