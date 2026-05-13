@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -15,6 +16,50 @@ import {
 
 import { Button } from "@/components/ui/button";
 
+// ─── Paddle Types ────────────────────────────────────────────────────────────
+declare global {
+  interface Window {
+    Paddle: {
+      Initialize: (opts: { token: string }) => void;
+      Checkout: {
+        open: (opts: { items: { priceId: string; quantity: number }[] }) => void;
+      };
+    };
+  }
+}
+
+// ─── Config ──────────────────────────────────────────────────────────────────
+const PADDLE_CLIENT_TOKEN = "live_73411e63959b4217150e9c9b9ba";
+const PADDLE_PRICE_ID = "pri_01krgkv8py579n4hjew2cy0a6q";
+
+// ─── Hook: Load & Init Paddle ────────────────────────────────────────────────
+function usePaddle() {
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
+
+    const script = document.createElement("script");
+    script.src = "https://cdn.paddle.com/paddle/v2/paddle.js";
+    script.async = true;
+    script.onload = () => {
+      window.Paddle.Initialize({ token: PADDLE_CLIENT_TOKEN });
+    };
+    document.head.appendChild(script);
+  }, []);
+
+  const openCheckout = () => {
+    if (!window.Paddle) return;
+    window.Paddle.Checkout.open({
+      items: [{ priceId: PADDLE_PRICE_ID, quantity: 1 }],
+    });
+  };
+
+  return { openCheckout };
+}
+
+// ─── Data ────────────────────────────────────────────────────────────────────
 const FREE_FEATURES = [
   { text: "1 business document per day", included: true },
   { text: "Invoices, Quotations & LPOs", included: true },
@@ -41,6 +86,7 @@ const PRO_FEATURES = [
   { text: "Designed for freelancers & SMEs", included: true },
 ];
 
+// ─── Header ──────────────────────────────────────────────────────────────────
 function Header() {
   return (
     <header className="border-b border-white/10 backdrop-blur-xl sticky top-0 z-50">
@@ -48,64 +94,28 @@ function Header() {
         <Link href="/" className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-emerald-500 flex items-center justify-center shadow-xl">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M6 4h6.5a5.5 5.5 0 0 1 0 16H6V4z"
-                stroke="white"
-                strokeWidth="1.8"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M6 4v16"
-                stroke="white"
-                strokeWidth="1.2"
-                opacity="0.6"
-              />
-              <path
-                d="M9 9h3.5M9 12h3M9 15h3.5"
-                stroke="white"
-                strokeWidth="1.3"
-                strokeLinecap="round"
-                opacity="0.8"
-              />
+              <path d="M6 4h6.5a5.5 5.5 0 0 1 0 16H6V4z" stroke="white" strokeWidth="1.8" strokeLinejoin="round" />
+              <path d="M6 4v16" stroke="white" strokeWidth="1.2" opacity="0.6" />
+              <path d="M9 9h3.5M9 12h3M9 15h3.5" stroke="white" strokeWidth="1.3" strokeLinecap="round" opacity="0.8" />
             </svg>
           </div>
-
           <div>
-            <div className="text-xl font-bold tracking-tight text-white">
-              DOCUVAT
-            </div>
-            <div className="text-xs text-slate-400">
-              Business Documents & Client Workspace
-            </div>
+            <div className="text-xl font-bold tracking-tight text-white">DOCUVAT</div>
+            <div className="text-xs text-slate-400">Business Documents & Client Workspace</div>
           </div>
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">
-          <Link
-            href="/about"
-            className="text-sm text-slate-300 hover:text-white transition-colors"
-          >
-            About
-          </Link>
-
-          <Link
-            href="/pricing"
-            className="text-sm text-white font-medium"
-          >
-            Pricing
-          </Link>
+          <Link href="/about" className="text-sm text-slate-300 hover:text-white transition-colors">About</Link>
+          <Link href="/pricing" className="text-sm text-white font-medium">Pricing</Link>
         </nav>
 
         <div className="flex gap-3">
           <Link href="/dashboard">
-            <Button
-              variant="outline"
-              className="border-white/20 bg-white/5 text-white hover:bg-white/10 text-sm"
-            >
+            <Button variant="outline" className="border-white/20 bg-white/5 text-white hover:bg-white/10 text-sm">
               Dashboard
             </Button>
           </Link>
-
           <Link href="/invoice">
             <Button className="bg-gradient-to-r from-blue-500 to-emerald-500 hover:opacity-90 text-sm">
               Try Free
@@ -117,7 +127,10 @@ function Header() {
   );
 }
 
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function PricingPage() {
+  const { openCheckout } = usePaddle();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white overflow-hidden">
       {/* Background */}
@@ -147,56 +160,28 @@ export default function PricingPage() {
             </h1>
 
             <p className="text-xl text-slate-400 max-w-3xl mx-auto leading-8">
-              DOCUVAT helps freelancers and SMEs manage invoices,
-              quotations, LPOs, and client records in one professional workspace.
+              DOCUVAT helps freelancers and SMEs manage invoices, quotations, LPOs, and client records in one professional workspace.
             </p>
 
             <div className="mt-6 text-sm text-slate-500 max-w-2xl mx-auto">
-              Built for UAE & Saudi freelancers, agencies, consultants,
-              trading companies, and SMEs.
+              Built for UAE & Saudi freelancers, agencies, consultants, trading companies, and SMEs.
             </div>
           </motion.div>
 
           {/* FEATURES STRIP */}
           <div className="grid md:grid-cols-4 gap-4 max-w-5xl mx-auto mb-20">
             {[
-              {
-                icon: FileText,
-                title: "Business Documents",
-                desc: "Invoices, Quotations & LPOs",
-              },
-              {
-                icon: Users,
-                title: "Client Management",
-                desc: "Save customers & history",
-              },
-              {
-                icon: LayoutDashboard,
-                title: "Workspace Dashboard",
-                desc: "Manage everything in one place",
-              },
-              {
-                icon: ShieldCheck,
-                title: "VAT & ZATCA Ready",
-                desc: "Built for UAE & Saudi compliance",
-              },
+              { icon: FileText, title: "Business Documents", desc: "Invoices, Quotations & LPOs" },
+              { icon: Users, title: "Client Management", desc: "Save customers & history" },
+              { icon: LayoutDashboard, title: "Workspace Dashboard", desc: "Manage everything in one place" },
+              { icon: ShieldCheck, title: "VAT & ZATCA Ready", desc: "Built for UAE & Saudi compliance" },
             ].map((item) => {
               const Icon = item.icon;
-
               return (
-                <div
-                  key={item.title}
-                  className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl"
-                >
+                <div key={item.title} className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
                   <Icon className="h-6 w-6 text-emerald-400 mb-4" />
-
-                  <div className="font-semibold text-white mb-1">
-                    {item.title}
-                  </div>
-
-                  <div className="text-sm text-slate-400">
-                    {item.desc}
-                  </div>
+                  <div className="font-semibold text-white mb-1">{item.title}</div>
+                  <div className="text-sm text-slate-400">{item.desc}</div>
                 </div>
               );
             })}
@@ -213,38 +198,22 @@ export default function PricingPage() {
               className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-8"
             >
               <div className="mb-6">
-                <div className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-2">
-                  Free
-                </div>
-
+                <div className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-2">Free</div>
                 <div className="flex items-end gap-2">
                   <span className="text-5xl font-extrabold">0</span>
-                  <span className="text-xl text-slate-400 mb-2">
-                    USD / month
-                  </span>
+                  <span className="text-xl text-slate-400 mb-2">USD / month</span>
                 </div>
-
-                <p className="text-slate-400 mt-3 text-sm">
-                  Perfect for trying DOCUVAT before upgrading.
-                </p>
+                <p className="text-slate-400 mt-3 text-sm">Perfect for trying DOCUVAT before upgrading.</p>
               </div>
 
               <div className="space-y-3 mb-8">
                 {FREE_FEATURES.map((f) => (
                   <div key={f.text} className="flex items-center gap-3">
-                    {f.included ? (
-                      <CheckCircle className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-slate-600 flex-shrink-0" />
-                    )}
-
-                    <span
-                      className={`text-sm ${
-                        f.included
-                          ? "text-slate-200"
-                          : "text-slate-500"
-                      }`}
-                    >
+                    {f.included
+                      ? <CheckCircle className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                      : <XCircle className="h-4 w-4 text-slate-600 flex-shrink-0" />
+                    }
+                    <span className={`text-sm ${f.included ? "text-slate-200" : "text-slate-500"}`}>
                       {f.text}
                     </span>
                   </div>
@@ -252,10 +221,7 @@ export default function PricingPage() {
               </div>
 
               <Link href="/invoice">
-                <Button
-                  variant="outline"
-                  className="w-full border-white/20 bg-white/5 text-white hover:bg-white/10 rounded-xl py-6"
-                >
+                <Button variant="outline" className="w-full border-white/20 bg-white/5 text-white hover:bg-white/10 rounded-xl py-6">
                   Start Free
                 </Button>
               </Link>
@@ -276,21 +242,13 @@ export default function PricingPage() {
               </div>
 
               <div className="mb-6">
-                <div className="text-sm font-semibold text-blue-400 uppercase tracking-widest mb-2">
-                  Pro
-                </div>
-
+                <div className="text-sm font-semibold text-blue-400 uppercase tracking-widest mb-2">Pro</div>
                 <div className="flex items-end gap-2">
                   <span className="text-5xl font-extrabold">10</span>
-
-                  <span className="text-xl text-slate-400 mb-2">
-                    USD / month
-                  </span>
+                  <span className="text-xl text-slate-400 mb-2">USD / month</span>
                 </div>
-
                 <p className="text-slate-400 mt-3 text-sm leading-6">
-                  Complete business document and client management system
-                  for freelancers and SMEs.
+                  Complete business document and client management system for freelancers and SMEs.
                 </p>
               </div>
 
@@ -298,16 +256,14 @@ export default function PricingPage() {
                 {PRO_FEATURES.map((f) => (
                   <div key={f.text} className="flex items-center gap-3">
                     <CheckCircle className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-
-                    <span className="text-sm text-slate-200">
-                      {f.text}
-                    </span>
+                    <span className="text-sm text-slate-200">{f.text}</span>
                   </div>
                 ))}
               </div>
 
-              {/* Paddle Button */}
+              {/* ✅ Paddle Checkout Button */}
               <Button
+                onClick={openCheckout}
                 className="w-full bg-gradient-to-r from-blue-500 to-emerald-500 hover:opacity-90 rounded-xl py-6 text-base font-semibold"
               >
                 Upgrade to Pro
@@ -328,40 +284,18 @@ export default function PricingPage() {
             transition={{ delay: 0.3 }}
             className="max-w-3xl mx-auto mt-24"
           >
-            <h2 className="text-3xl font-bold text-center mb-10">
-              Common Questions
-            </h2>
+            <h2 className="text-3xl font-bold text-center mb-10">Common Questions</h2>
 
             <div className="space-y-4">
               {[
-                {
-                  q: "What is DOCUVAT?",
-                  a: "DOCUVAT is a business document and client management platform for UAE and Saudi businesses. Create invoices, quotations, and LPOs in one workspace.",
-                },
-                {
-                  q: "Does DOCUVAT support VAT and ZATCA?",
-                  a: "Yes. DOCUVAT supports UAE VAT requirements and Saudi electronic invoicing workflows.",
-                },
-                {
-                  q: "Can I manage clients and companies?",
-                  a: "Yes. The Pro plan includes a complete client management workspace with saved customer records and document history.",
-                },
-                {
-                  q: "Will Paddle show local currency?",
-                  a: "Yes. Paddle automatically displays prices in your local currency depending on your country.",
-                },
+                { q: "What is DOCUVAT?", a: "DOCUVAT is a business document and client management platform for UAE and Saudi businesses. Create invoices, quotations, and LPOs in one workspace." },
+                { q: "Does DOCUVAT support VAT and ZATCA?", a: "Yes. DOCUVAT supports UAE VAT requirements and Saudi electronic invoicing workflows." },
+                { q: "Can I manage clients and companies?", a: "Yes. The Pro plan includes a complete client management workspace with saved customer records and document history." },
+                { q: "Will Paddle show local currency?", a: "Yes. Paddle automatically displays prices in your local currency depending on your country." },
               ].map((item) => (
-                <div
-                  key={item.q}
-                  className="rounded-2xl border border-white/10 bg-white/5 p-6"
-                >
-                  <div className="font-semibold text-white mb-2">
-                    {item.q}
-                  </div>
-
-                  <div className="text-sm text-slate-400 leading-7">
-                    {item.a}
-                  </div>
+                <div key={item.q} className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                  <div className="font-semibold text-white mb-2">{item.q}</div>
+                  <div className="text-sm text-slate-400 leading-7">{item.a}</div>
                 </div>
               ))}
             </div>
@@ -374,13 +308,10 @@ export default function PricingPage() {
             transition={{ delay: 0.4 }}
             className="text-center mt-24"
           >
-            <h2 className="text-4xl font-bold mb-4">
-              Ready to grow your business?
-            </h2>
+            <h2 className="text-4xl font-bold mb-4">Ready to grow your business?</h2>
 
             <p className="text-slate-400 mb-8 max-w-2xl mx-auto">
-              Manage invoices, quotations, LPOs, and clients
-              from one modern business workspace.
+              Manage invoices, quotations, LPOs, and clients from one modern business workspace.
             </p>
 
             <div className="flex justify-center gap-4 flex-wrap">
@@ -391,7 +322,9 @@ export default function PricingPage() {
                 </Button>
               </Link>
 
+              {/* ✅ Paddle Checkout Button (Final CTA) */}
               <Button
+                onClick={openCheckout}
                 variant="outline"
                 className="border-white/20 bg-white/5 text-white hover:bg-white/10 px-8 py-6 text-base rounded-xl"
               >
@@ -405,28 +338,10 @@ export default function PricingPage() {
         <footer className="border-t border-white/10 py-8 mt-14">
           <div className="mx-auto max-w-7xl px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-400">
             <div>© 2026 DOCUVAT. All rights reserved.</div>
-
             <div className="flex gap-6">
-              <Link
-                href="/about"
-                className="hover:text-white transition-colors"
-              >
-                About
-              </Link>
-
-              <Link
-                href="/pricing"
-                className="hover:text-white transition-colors"
-              >
-                Pricing
-              </Link>
-
-              <Link
-                href="/privacy"
-                className="hover:text-white transition-colors"
-              >
-                Privacy
-              </Link>
+              <Link href="/about" className="hover:text-white transition-colors">About</Link>
+              <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
+              <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
             </div>
           </div>
         </footer>
