@@ -15,50 +15,66 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-
-// ─── Paddle Types ────────────────────────────────────────────────────────────
-declare global {
-  interface Window {
-    Paddle: {
-      Initialize: (opts: { token: string }) => void;
-      Checkout: {
-        open: (opts: { items: { priceId: string; quantity: number }[] }) => void;
-      };
-    };
-  }
-}
+import { initializePaddle, Paddle } from "@paddle/paddle-js";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
-const PADDLE_CLIENT_TOKEN = "live_73411e63959b4217150e9c9b9ba";
-const PADDLE_PRICE_ID = "pri_01krgkv8py579n4hjew2cy0a6q";
+const PADDLE_CLIENT_TOKEN =
+  process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!;
+
+const PADDLE_PRICE_ID =
+  process.env.NEXT_PUBLIC_PADDLE_PRICE_ID!;
 
 // ─── Hook: Load & Init Paddle ────────────────────────────────────────────────
 function usePaddle() {
+  const paddleRef = useRef<Paddle | null>(null);
   const initialized = useRef(false);
 
   useEffect(() => {
     if (initialized.current) return;
+
     initialized.current = true;
 
-    const script = document.createElement("script");
-    script.src = "https://cdn.paddle.com/paddle/v2/paddle.js";
-    script.async = true;
-    script.onload = () => {
-      window.Paddle.Initialize({ token: PADDLE_CLIENT_TOKEN });
+    const setup = async () => {
+      try {
+        
+  const paddle = await initializePaddle({
+  token: PADDLE_CLIENT_TOKEN,
+});
+
+        if (paddle) {
+          paddleRef.current = paddle;
+          console.log("Paddle initialized");
+        }
+      } catch (err) {
+        console.error("Paddle init error:", err);
+      }
     };
-    document.head.appendChild(script);
+
+    setup();
   }, []);
 
-  const openCheckout = () => {
-    if (!window.Paddle) return;
-    window.Paddle.Checkout.open({
-      items: [{ priceId: PADDLE_PRICE_ID, quantity: 1 }],
-    });
+  const openCheckout = async () => {
+    try {
+      if (!paddleRef.current) {
+        console.error("Paddle not initialized");
+        return;
+      }
+
+      paddleRef.current.Checkout.open({
+        items: [
+          {
+            priceId: PADDLE_PRICE_ID,
+            quantity: 1,
+          },
+        ],
+      });
+    } catch (err) {
+      console.error("Checkout error:", err);
+    }
   };
 
   return { openCheckout };
 }
-
 // ─── Data ────────────────────────────────────────────────────────────────────
 const FREE_FEATURES = [
   { text: "1 business document per day", included: true },
