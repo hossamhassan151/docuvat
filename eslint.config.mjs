@@ -14,5 +14,22 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
   ]),
 ]);
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  async redirects() {
+    return [
+      {
+        source: '/ksa-invoice-generator',
+        destination: '/sa',
+        permanent: true, // 301 Redirect: مفيد جداً للـ SEO عشان ينقل قوة الصفحة القديمة للجديدة
+      },
+      {
+        source: '/invoice-generator-uae',
+        destination: '/ae',
+        permanent: true,
+      },
+    ]
+  },
+}
 
 export default eslintConfig;

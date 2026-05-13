@@ -66,7 +66,7 @@ function AuthButtons() {
 const THEMES = [
   { id: "navy", name: "Navy & Slate", primary: "#1B2A4A", accent: "#4A6FA5", light: "#EDF2FB" },
   { id: "red", name: "Modern Red", primary: "#2C3E50", accent: "#E74C3C", light: "#FEF2F2" },
-  { id: "green", name: "UAE Green", primary: "#006400", accent: "#C9A84C", light: "#F0F7F0" },
+  { id: "green", name: "GCC Green", primary: "#006400", accent: "#C9A84C", light: "#F0F7F0" },
 ];
 
 const SAMPLE_ITEMS = [
@@ -87,7 +87,7 @@ function LiveInvoicePreview({ theme }: { theme: typeof THEMES[0] }) {
       <div style={{ padding: "12px 16px 10px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
           <div style={{ fontSize: 11, fontWeight: 800, color: theme.primary }}>DOCUVAT LLC</div>
-          <div style={{ color: "#888", marginTop: 2, lineHeight: 1.6 }}>Dubai, United Arab Emirates<br />+971 5 123 4567</div>
+          <div style={{ color: "#888", marginTop: 2, lineHeight: 1.6 }}>Dubai, UAE · Riyadh, Saudi Arabia<br />+971 5 123 4567</div>
           <div style={{ marginTop: 4, fontSize: 8, color: theme.accent, fontWeight: 600 }}>TRN: 100234567890003</div>
         </div>
         <div style={{ textAlign: "right" }}>
@@ -257,11 +257,11 @@ function SocialProof() {
     <section className="py-16 border-t border-white/5 relative">
       <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-6 mb-16 max-w-4xl mx-auto">
         {[
-          { value: `${totalDocs}+`, label: "Documents Created" },
-          { value: "UAE", label: "VAT Compliant" },
-          { value: "3", label: "Document Types" },
-          { value: "Free", label: "To Start" },
-        ].map((s) => (
+  { value: `${totalDocs}+`, label: "Documents Created" },
+  { value: "GCC", label: "VAT Ready" },
+  { value: "Clients", label: "Management System" },
+  { value: "24/7", label: "Cloud Access" },
+].map((s) => (
           <div key={s.label} className="text-center bg-white/3 border border-white/5 rounded-xl py-4 px-2 backdrop-blur-sm">
             <div className="text-3xl font-extrabold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent mb-1">{s.value}</div>
             <div className="text-xs text-slate-400 uppercase tracking-wider">{s.label}</div>
@@ -270,8 +270,8 @@ function SocialProof() {
       </div>
 
       <div className="text-center mb-10">
-        <h2 className="text-3xl font-bold mb-2 tracking-tight">Trusted by UAE Professionals</h2>
-        <p className="text-slate-400 text-sm">Real feedback from businesses using DOCUVAT</p>
+        <h2 className="text-3xl font-bold mb-2 tracking-tight">Trusted by Businesses Across UAE & Saudi Arabia</h2>
+        <p className="text-slate-400 text-sm">Used daily by freelancers, agencies, trading companies, and SMEs across the GCC</p>
       </div>
 
       <div 
@@ -345,15 +345,27 @@ function SocialProof() {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 const documents = [
-  { title: "Invoice Builder", description: "Professional VAT invoices in seconds with elegant templates.", icon: Receipt, href: "/invoice" },
-  { title: "Quotation Builder", description: "Polished quotations with automatic totals and VAT calculations.", icon: FileText, href: "/quotation" },
-  { title: "LPO Builder", description: "Purchase orders for suppliers with a consistent brand identity.", icon: ShoppingCart, href: "/lpo" },
+  { title: "Invoice Builder", description: "Create branded invoices, track clients, and manage billing professionally.", icon: Receipt, href: "/invoice" },
+  { title: "Quotation Builder", description: "Send professional quotations with VAT calculations and clean layouts.", icon: FileText, href: "/quotation" },
+  { title: "LPO Builder", description: "Generate organized purchase orders for suppliers and vendors.", icon: ShoppingCart, href: "/lpo" },
 ];
 
 const features = [
-  { icon: Shield, title: "Secure", text: "Your documents and business data are fully protected." },
-  { icon: Zap, title: "Fast", text: "Generate polished documents in under a minute." },
-  { icon: Sparkles, title: "Professional", text: "Designed to impress clients and close deals faster." },
+  {
+    icon: Shield,
+    title: "Secure Cloud Platform",
+    text: "Your clients, invoices, and business documents are securely stored and protected.",
+  },
+  {
+    icon: Zap,
+    title: "Fast Workflow",
+    text: "Create invoices, quotations, and purchase orders in seconds.",
+  },
+  {
+    icon: Sparkles,
+    title: "Built for GCC Businesses",
+    text: "Professional layouts optimized for UAE, Saudi Arabia, and Gulf companies.",
+  },
 ];
 
 export default function HomePage() {
@@ -374,7 +386,9 @@ export default function HomePage() {
               </div>
               <div>
                 <div className="text-xl font-bold tracking-tight">DOCUVAT</div>
-                <div className="text-xs text-slate-400">Smart Business Documents</div>
+                <div className="text-xs text-slate-400">
+  Invoicing & Client Management
+</div>
               </div>
             </div>
             <nav className="hidden md:flex items-center gap-8">
@@ -389,15 +403,17 @@ export default function HomePage() {
           <section className="py-20 text-center relative">
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 mb-6 text-sm text-slate-200">
-                <Zap className="h-4 w-4 text-emerald-400" /> UAE VAT Compliant
+               <Zap className="h-4 w-4 text-emerald-400" /> GCC VAT Ready
               </div>
-              <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-6 leading-tight">
-                Professional Documents <br />
-                <span className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">Built for UAE Business</span>
-              </h1>
-              <p className="text-xl text-slate-300 max-w-2xl mx-auto mb-10 leading-relaxed">
-                Create invoices, quotations, and purchase orders in seconds. VAT-ready, TRN-compliant, and beautifully designed.
-              </p>
+             <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-6 leading-tight">
+  Invoices & Client Management <br />
+  <span className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
+    Built for UAE & Saudi Businesses
+  </span>
+</h1>
+              <p className="text-xl text-slate-300 max-w-3xl mx-auto mb-10 leading-relaxed">
+  Manage clients, create professional invoices, quotations, and purchase orders in seconds. Built for businesses across the UAE, Saudi Arabia, and the GCC.
+</p>
               <div className="flex justify-center gap-4 mb-16">
                 <Link href="/invoice"><Button className="bg-gradient-to-r from-blue-500 to-emerald-500 hover:opacity-90 px-8 py-6 text-lg rounded-xl shadow-lg">Try Free <ArrowRight className="ml-2 h-5 w-5" /></Button></Link>
                 <Link href="/pricing"><Button variant="outline" className="border-white/20 bg-white/5 text-white hover:bg-white/10 px-8 py-6 text-lg rounded-xl">Pricing</Button></Link>

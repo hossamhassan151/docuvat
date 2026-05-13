@@ -1,6 +1,4 @@
-
 "use client";
-// ... باقي الـ imports زي ما هو
 import Link from "next/link";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase";
@@ -10,9 +8,7 @@ import {
   Store, Cpu, Building2, Palette, CheckCircle, Zap,
 } from "lucide-react";
 
-
-
-// ─── Carousel (مأخوذ من Home) ─────────────────────────────────────────────────
+// --- Carousel Logic (نفس المنطق البرمجي تماماً مع تغيير النصوص) ---
 
 const THEMES = [
   { id: "navy",  name: "Navy & Slate", primary: "#1B2A4A", accent: "#4A6FA5", light: "#EDF2FB" },
@@ -21,9 +17,9 @@ const THEMES = [
 ];
 
 const SAMPLE_ITEMS = [
-  { desc: "Consulting Services",  qty: 3, price: 5000 },
+  { desc: "Consulting Services",   qty: 3, price: 5000 },
   { desc: "Brand Identity Design", qty: 1, price: 8500 },
-  { desc: "Project Management",   qty: 2, price: 3000 },
+  { desc: "Project Management",    qty: 2, price: 3000 },
 ];
 
 function LiveInvoicePreview({ theme }: { theme: typeof THEMES[0] }) {
@@ -50,8 +46,8 @@ function LiveInvoicePreview({ theme }: { theme: typeof THEMES[0] }) {
       </div>
       <div style={{ padding: "0 16px 10px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
         {[
-          { label: "Billed By — من", name: "DOCUVAT LLC",    addr: "Dubai, UAE" },
-          { label: "Billed To — إلى", name: "Al Noor Trading", addr: "Abu Dhabi, UAE" },
+          { label: "Billed By — من", name: "DOCUVAT LLC",     addr: "Dubai, UAE" },
+          { label: "Client Account — حساب العميل", name: "Al Noor Trading", addr: "Abu Dhabi, UAE" },
         ].map((c) => (
           <div key={c.label} style={{ background: theme.light, borderRadius: 6, padding: "8px 10px", borderLeft: `2px solid ${theme.accent}` }}>
             <div style={{ fontSize: 6, textTransform: "uppercase", letterSpacing: 1, color: theme.accent, fontWeight: 700, marginBottom: 4 }}>{c.label}</div>
@@ -110,7 +106,7 @@ function InvoiceCarousel() {
           <div className="w-3 h-3 rounded-full bg-red-500/70" />
           <div className="w-3 h-3 rounded-full bg-yellow-500/70" />
           <div className="w-3 h-3 rounded-full bg-green-500/70" />
-          <div className="flex-1 mx-4 bg-slate-700 rounded-md px-3 py-1 text-xs text-slate-400">app.docuvat.com/invoice</div>
+          <div className="flex-1 mx-4 bg-slate-700 rounded-md px-3 py-1 text-xs text-slate-400">app.docuvat.com/dashboard/clients</div>
         </div>
         <div className="bg-slate-100 p-4">
           <AnimatePresence mode="wait">
@@ -133,14 +129,12 @@ function InvoiceCarousel() {
   );
 }
 
-// ─── Social Proof (مأخوذ من Home) ─────────────────────────────────────────────
-
 interface Review { id: string; rating: number; comment: string; user_name: string; user_role: string; }
 
 const STATIC_REVIEWS: Review[] = [
-  { id: "s1", rating: 5, comment: "Finally a UAE invoice tool that actually works. Clean, fast, and VAT compliant.", user_name: "Ibrahim Moustafa", user_role: "Freelance Consultant, Dubai" },
-  { id: "s2", rating: 5, comment: "Saved me hours every week. My clients love how professional the invoices look.", user_name: "Sara Al Mansoori", user_role: "Marketing Agency, Abu Dhabi" },
-  { id: "s3", rating: 5, comment: "Simple and professional. Exactly what small businesses in the UAE need.", user_name: "Mohammed Al-Zaabi", user_role: "Trading Company, Sharjah" },
+  { id: "s1", rating: 5, comment: "Finally a UAE management tool that actually works. Clean, fast, and VAT compliant.", user_name: "Ibrahim Moustafa", user_role: "Freelance Consultant, Dubai" },
+  { id: "s2", rating: 5, comment: "Saved me hours every week. My clients love the professional portals and invoices.", user_name: "Sara Al Mansoori", user_role: "Marketing Agency, Abu Dhabi" },
+  { id: "s3", rating: 5, comment: "Simple and professional dashboard. Exactly what small businesses in the UAE need.", user_name: "Mohammed Al-Zaabi", user_role: "Trading Company, Sharjah" },
 ];
 
 const INDUSTRIES = [
@@ -181,13 +175,11 @@ function SocialProof() {
 
   return (
     <section className="py-16 border-t border-white/5">
-
-      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16 max-w-4xl mx-auto">
         {[
-          { value: `${totalDocs}+`, label: "Documents Created" },
+          { value: `${totalDocs}+`, label: "Records Managed" },
           { value: "UAE",           label: "VAT Compliant" },
-          { value: "3",             label: "Document Types" },
+          { value: "Full",             label: "Management Tools" },
           { value: "Free",          label: "To Start" },
         ].map((s) => (
           <div key={s.label} className="text-center bg-white/3 border border-white/5 rounded-xl py-4 px-2 backdrop-blur-sm">
@@ -197,7 +189,6 @@ function SocialProof() {
         ))}
       </div>
 
-      {/* Reviews */}
       <div className="text-center mb-10">
         <h2 className="text-3xl font-bold mb-2">Trusted by UAE Professionals</h2>
         <p className="text-slate-400 text-sm">Real feedback from businesses using DOCUVAT</p>
@@ -242,7 +233,6 @@ function SocialProof() {
         </div>
       </div>
 
-      {/* Industries */}
       <div className="mt-16 text-center">
         <div className="text-xs text-slate-500 uppercase tracking-widest mb-6">Trusted across industries</div>
         <div className="flex flex-wrap justify-center gap-3 max-w-4xl mx-auto px-4">
@@ -261,8 +251,6 @@ function SocialProof() {
   );
 }
 
-// ─── Main Landing Page ─────────────────────────────────────────────────────────
-
 export default function FreeInvoiceGeneratorPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-white overflow-hidden">
@@ -270,27 +258,24 @@ export default function FreeInvoiceGeneratorPage() {
 
       <div className="relative z-10">
 
-        {/* ── HERO ───────────────────────────────────────────────────────────── */}
+        {/* ── HERO ── */}
         <section className="mx-auto max-w-7xl px-6 py-20">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
-
-            {/* Left — Copy */}
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-1.5 text-sm font-medium text-cyan-300">
-                <Zap className="h-4 w-4" /> Official UAE VAT Compliant Generator
+                <Zap className="h-4 w-4" /> Professional Business Management & VAT Invoicing
               </div>
 
               <h1 className="text-5xl font-bold leading-tight md:text-6xl mb-6">
-                Free Online <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">VAT Invoice</span> Generator for UAE Businesses
+                Professional <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">Business Management</span> & VAT Invoicing for UAE
               </h1>
 
               <p className="text-lg text-slate-300 leading-8 mb-8">
-                DOCUVAT simplifies invoicing for UAE freelancers and SMEs. Generate professional tax invoices that meet FTA requirements with automatic VAT calculations and instant PDF export.
+                Docuvat streamlines your client management and business workflow. Organize your customer database and generate FTA-compliant tax invoices in one integrated platform.
               </p>
 
-              {/* Trust Badges */}
               <div className="flex flex-wrap gap-3 mb-10">
-                {["No Credit Card", "FTA Compliant", "Instant PDF", "Free Plan"].map((badge) => (
+                {["No Credit Card", "FTA Compliant", "Client Portals", "CRM Included"].map((badge) => (
                   <div key={badge} className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-full px-3 py-1.5 text-xs text-slate-300">
                     <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />{badge}
                   </div>
@@ -299,7 +284,7 @@ export default function FreeInvoiceGeneratorPage() {
 
               <div className="flex flex-wrap gap-4">
                 <Link href="/invoice" className="rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 px-8 py-4 font-semibold shadow-lg shadow-cyan-500/20 transition hover:scale-105 hover:opacity-90">
-                  Start Invoicing Free →
+                  Manage Your Business Free →
                 </Link>
                 <Link href="/pricing" className="rounded-2xl border border-white/10 bg-white/5 px-8 py-4 font-semibold backdrop-blur-xl transition hover:bg-white/10">
                   View Pricing
@@ -307,20 +292,17 @@ export default function FreeInvoiceGeneratorPage() {
               </div>
             </motion.div>
 
-            {/* Right — Live Carousel */}
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7, delay: 0.2 }}>
               <InvoiceCarousel />
             </motion.div>
-
           </div>
         </section>
 
-        {/* ── SOCIAL PROOF ───────────────────────────────────────────────────── */}
         <div className="mx-auto max-w-7xl px-6">
           <SocialProof />
         </div>
 
-        {/* ── FEATURES ───────────────────────────────────────────────────────── */}
+        {/* ── FEATURES ── */}
         <section className="mx-auto max-w-7xl px-6 py-16">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-3">Why UAE Businesses Choose DOCUVAT</h2>
@@ -328,9 +310,9 @@ export default function FreeInvoiceGeneratorPage() {
           </div>
           <div className="grid gap-6 md:grid-cols-3">
             {[
-              { title: "FTA Compliant Invoices",        desc: "All mandatory fields required by the UAE Federal Tax Authority included automatically." },
-              { title: "Automatic VAT (5%) Calculation", desc: "Smart calculation for VAT-registered businesses in Abu Dhabi, Dubai, and Sharjah." },
-              { title: "Professional PDF Export",        desc: "Generate clean, modern PDF invoices ready to send to your clients via email." },
+              { title: "FTA Compliant Invoices",         desc: "Beyond invoicing; keep your business and clients fully aligned with UAE Federal Tax Authority requirements." },
+              { title: "Smart Financial Ledger",         desc: "Track every client transaction with automated VAT calculations for businesses in Abu Dhabi, Dubai, and Sharjah." },
+              { title: "Unified Document Workflow",      desc: "Manage quotes, LPOs, and invoices. Export professional documents that reflect your complete brand identity." },
             ].map((f) => (
               <div key={f.title} className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl hover:border-cyan-400/30 transition-colors">
                 <h3 className="text-xl font-semibold text-cyan-300 mb-3">{f.title}</h3>
@@ -340,26 +322,26 @@ export default function FreeInvoiceGeneratorPage() {
           </div>
         </section>
 
-        {/* ── SEO CONTENT ────────────────────────────────────────────────────── */}
+        {/* ── SEO CONTENT ── */}
         <section className="mx-auto max-w-5xl px-6 py-16">
           <div className="rounded-3xl border border-white/10 bg-white/5 p-10 backdrop-blur-xl">
-            <h2 className="text-3xl font-bold mb-6">The Best Free Invoicing Tool for Startups in the UAE</h2>
+            <h2 className="text-3xl font-bold mb-6">Integrated Client Management & Invoicing for UAE Growth</h2>
             <div className="space-y-4 text-slate-300 leading-8">
-              <p>As a professional in the UAE, staying compliant with tax regulations is crucial. <strong>DOCUVAT</strong> provides a seamless experience for creating tax-compliant documents. Our platform supports various business types, from service providers in Dubai Media City to trading companies in Abu Dhabi.</p>
-              <p>By using our free generator, you avoid manual errors in VAT calculation and ensure that your company branding remains consistent and professional.</p>
+              <p>As a professional in the UAE, staying compliant with tax regulations is crucial. <strong>DOCUVAT</strong> provides a seamless experience for managing a professional client-base and financial history. Our platform supports various business types, from service providers in Dubai Media City to trading companies in Abu Dhabi.</p>
+              <p>By using our business dashboard, you avoid manual errors in VAT calculation and ensure that your company branding remains consistent and professional.</p>
             </div>
           </div>
         </section>
 
-        {/* ── FAQ ────────────────────────────────────────────────────────────── */}
+        {/* ── FAQ ── */}
         <section className="mx-auto max-w-5xl px-6 py-16">
           <h2 className="text-4xl font-bold mb-10 text-center">Invoicing in the UAE: FAQs</h2>
           <div className="grid gap-6">
             {[
-              { q: "Does DOCUVAT support UAE VAT laws?",              a: "Yes, our generator is designed to include all mandatory fields required by the FTA for valid tax invoices." },
-              { q: "Is there a limit to how many invoices I can create?", a: "Our free plan allows 1 document per day. Upgrade to Pro for unlimited documents." },
+              { q: "Does DOCUVAT support UAE VAT laws?",               a: "Yes, our generator is designed to include all mandatory fields required by the FTA for valid tax invoices." },
+              { q: "Is there a limit to how many business documents I can create?", a: "Our free plan allows 1 document per day. Upgrade to Pro for unlimited documents." },
               { q: "Can I customize the currency to AED?",            a: "Absolutely, the tool defaults to AED for UAE businesses but can be adjusted for international clients." },
-              { q: "Do I need to sign up to use it?",                 a: "No signup needed to try — create your first invoice instantly. Sign up to save your company profile and access history." },
+              { q: "Do I need to sign up to use it?",                 a: "No signup needed to try — set up your client dashboard instantly. Sign up to save your company profile and access history." },
             ].map((faq) => (
               <div key={faq.q} className="rounded-2xl border border-white/10 bg-white/5 p-6 hover:bg-white/10 transition-all">
                 <h3 className="text-lg font-semibold text-cyan-200 mb-3">{faq.q}</h3>
@@ -369,7 +351,7 @@ export default function FreeInvoiceGeneratorPage() {
           </div>
         </section>
 
-        {/* ── FINAL CTA ──────────────────────────────────────────────────────── */}
+        {/* ── FINAL CTA ── */}
         <section className="mx-auto max-w-4xl px-6 pb-24 text-center">
           <div className="rounded-3xl border border-cyan-400/20 bg-gradient-to-r from-cyan-900/40 to-blue-900/40 p-12 shadow-2xl">
             <h2 className="text-3xl font-bold mb-4">Ready to Simplify Your Business Documents?</h2>
@@ -386,30 +368,17 @@ export default function FreeInvoiceGeneratorPage() {
           </div>
         </section>
 
-        {/* ── FOOTER ─────────────────────────────────────────────────────────── */}
-{/* ── FOOTER ─────────────────────────────────────────────────────────── */}
-<footer className="border-t border-white/10 py-10 bg-slate-950/30 backdrop-blur-sm">
-  <div className="mx-auto max-w-7xl px-6 flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-slate-400">
-
-    <div>© 2026 DOCUVAT. All rights reserved.</div>
-
-    {/* MIDDLE LINK */}
-    <Link
-      href="/blog/uae-vat-law-changes-2026"
-      className="text-cyan-400 hover:text-white transition-colors"
-    >
-      VAT Law 2026
-    </Link>
-
-    <div className="flex gap-6 border border-white/5 bg-white/3 rounded-full px-5 py-2">
-      <Link href="/about" className="hover:text-white transition-colors">About</Link>
-      <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
-      <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-    </div>
-
-  </div>
-</footer>
-
+        <footer className="border-t border-white/10 py-10 bg-slate-950/30 backdrop-blur-sm">
+          <div className="mx-auto max-w-7xl px-6 flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-slate-400">
+            <div>© 2026 DOCUVAT. All rights reserved.</div>
+            <Link href="/blog/uae-vat-law-changes-2026" className="text-cyan-400 hover:text-white transition-colors">VAT Law 2026</Link>
+            <div className="flex gap-6 border border-white/5 bg-white/3 rounded-full px-5 py-2">
+              <Link href="/about" className="hover:text-white transition-colors">About</Link>
+              <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
+              <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );

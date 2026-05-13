@@ -17,20 +17,36 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://www.docuvat.com"),
 
   title: {
-    default: "DocuVat | UAE VAT Invoice & Quotation System",
-    template: "%s | DocuVat",
+    default:
+      "DOCUVAT — Smart Invoicing & Client Management for UAE & Saudi Businesses",
+    template: "%s | DOCUVAT",
   },
 
   description:
-    "Create VAT invoices, quotations, and LPOs in seconds. Fully compliant with UAE Federal Tax Authority (FTA) requirements.",
+    "Create professional invoices, quotations, and manage clients online with DOCUVAT. Built for UAE & Saudi businesses with VAT-ready documents and modern templates.",
 
   keywords: [
-    "UAE invoice generator",
-    "Dubai quotation maker",
+    "invoice generator UAE",
+    "Saudi invoice software",
+    "quotation generator UAE",
+    "quotation generator Saudi Arabia",
     "VAT invoice UAE",
-    "LPO generator",
-    "DocuVat",
+    "Saudi VAT invoice",
+    "invoice maker Dubai",
+    "invoice software Saudi Arabia",
+    "client management software",
+    "business documents UAE",
+    "business invoicing GCC",
+    "DOCUVAT",
   ],
+  // inside layout.tsx metadata
+alternates: {
+  canonical: 'https://www.docuvat.com',
+  languages: {
+    'en-SA': 'https://www.docuvat.com/sa',
+    'en-AE': 'https://www.docuvat.com/ae',
+  },
+},
 
   icons: {
     icon: [
@@ -39,33 +55,43 @@ export const metadata: Metadata = {
       { url: "/icon-48.png", type: "image/png", sizes: "48x48" },
     ],
     shortcut: "/favicon.ico",
-    apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180" },
-    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
 
   openGraph: {
-    title: "DocuVat | UAE Business Invoices & Quotations",
+    title:
+      "DOCUVAT — Smart Invoicing & Client Management for GCC Businesses",
+
     description:
-      "Generate VAT-compliant invoices, quotations, and LPOs instantly in UAE.",
+      "Professional invoicing, quotations, and client management platform for UAE & Saudi businesses.",
+
     url: "https://www.docuvat.com",
-    siteName: "DocuVat",
+
+    siteName: "DOCUVAT",
+
     type: "website",
-    locale: "en_AE",
+
+    locale: "en_US",
+
     images: [
       {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "DocuVat SaaS Preview",
+        alt: "DOCUVAT Preview",
       },
     ],
   },
 
   twitter: {
     card: "summary_large_image",
-    title: "DocuVat UAE Invoice System",
-    description: "Professional invoices & quotations for UAE businesses.",
+
+    title:
+      "DOCUVAT — Smart Invoicing & Client Management",
+
+    description:
+      "Professional invoices, quotations, and client workspace for GCC businesses.",
+
     images: ["/og.png"],
   },
 
@@ -90,29 +116,38 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
-        {/* ✅ Structured Data (Schema.org) - المكان الصحيح */}
+        {/* Structured Data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
+
               "@type": "SoftwareApplication",
-              name: "DocuVat",
+
+              name: "DOCUVAT",
+
               applicationCategory: "BusinessApplication",
+
               operatingSystem: "Web",
+
               description:
-                "UAE VAT invoice, quotation and LPO generator system.",
+                "Smart invoicing, quotations, and client management platform for UAE & Saudi businesses.",
+
+              url: "https://www.docuvat.com",
+
               offers: {
                 "@type": "Offer",
                 price: "0",
-                priceCurrency: "AED",
+                priceCurrency: "USD",
               },
             }),
           }}
         />
       </head>
 
-      <body className="min-h-full flex flex-col bg-black text-white">
+     <body className="min-h-full flex flex-col bg-black">
+
         {children}
 
         {/* Google Analytics */}
@@ -120,11 +155,17 @@ export default function RootLayout({
           src="https://www.googletagmanager.com/gtag/js?id=G-HNE73B20HF"
           strategy="afterInteractive"
         />
+
         <Script id="ga" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
+
+            function gtag() {
+              dataLayer.push(arguments);
+            }
+
             gtag('js', new Date());
+
             gtag('config', 'G-HNE73B20HF');
           `}
         </Script>
@@ -133,9 +174,17 @@ export default function RootLayout({
         <Script id="clarity" strategy="afterInteractive">
           {`
             (function(c,l,a,r,i,t,y){
-                c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-                t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-                y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+                c[a]=c[a]||function(){
+                  (c[a].q=c[a].q||[]).push(arguments)
+                };
+
+                t=l.createElement(r);
+                t.async=1;
+                t.src="https://www.clarity.ms/tag/"+i;
+
+                y=l.getElementsByTagName(r)[0];
+                y.parentNode.insertBefore(t,y);
+
             })(window, document, "clarity", "script", "wne0jag5do");
           `}
         </Script>

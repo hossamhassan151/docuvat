@@ -671,7 +671,27 @@ export default function InvoiceBuilder({ initialType }: { initialType: "invoice"
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setIsGuest(true); return; }
       setIsGuest(false);
+// ✅ لو فيه clientId في الـ URL، جيب بيانات العميل
+const urlParams = new URLSearchParams(window.location.search);
+const clientId = urlParams.get("clientId");
 
+if (clientId) {
+  const { data: client } = await supabase
+    .from("clients")
+    .select("*")
+    .eq("id", clientId)
+    .single();
+
+  if (client) {
+    setData((prev) => ({
+      ...prev,
+      clientName: client.name || "",
+      clientAddress: client.address || "",
+      clientCity: client.city || "",
+      clientTRN: client.trn || "",
+    }));
+  }
+}
       const { data: company } = await supabase.from("companies").select("*").eq("user_id", user.id).single();
       if (company) {
         setData((prev) => ({
@@ -705,8 +725,11 @@ export default function InvoiceBuilder({ initialType }: { initialType: "invoice"
           ...prev,
           docNumber: generateDocNumber(prefix, currentCounter + 1, style),
         }));
+        
       }
+      
     };
+    
     loadProfile();
   }, []);
 
@@ -775,13 +798,16 @@ export default function InvoiceBuilder({ initialType }: { initialType: "invoice"
     }
 
     if (user) {
-      await supabase.from("documents").insert({
-        user_id: user.id,
-        doc_type: data.docType,
-        doc_number: data.docNumber,
-        doc_date: data.docDate,
-        total: data.items.reduce((s, i) => s + i.qty * i.unitPrice, 0),
-      });
+     await supabase.from("documents").insert({
+  user_id: user.id,
+  doc_type: data.docType,
+  doc_number: data.docNumber,
+  doc_date: data.docDate,
+  total: data.items.reduce((s, i) => s + i.qty * i.unitPrice, 0),
+  client_name: data.clientName,  // ✅ جديد
+  client_id: new URLSearchParams(window.location.search).get("clientId"), // ✅ جديد
+});
+
 
       const counterField = getCounterField(data.docType);
       const prefix = getPrefix(data.docType);
@@ -830,10 +856,11 @@ export default function InvoiceBuilder({ initialType }: { initialType: "invoice"
 
       {/* SIDEBAR */}
       <aside className="w-[320px] min-w-[320px] bg-white border-r border-gray-100 flex flex-col overflow-hidden shadow-sm">
-        <div className="px-5 pt-5 pb-3 border-b border-gray-100">
-          <div className="text-base font-bold text-gray-900">Document Builder</div>
-          <div className="text-xs text-gray-400 mt-0.5">Professional Documents</div>
-        </div>
+        // غير
+<div className="px-5 pt-5 pb-3 border-b border-gray-100">
+  <div className="text-base font-bold text-gray-900">Document Builder</div>
+  <div className="text-xs text-gray-400 mt-0.5">Professional Documents · الإمارات والسعودية</div>
+</div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
 

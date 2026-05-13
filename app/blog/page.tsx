@@ -36,6 +36,31 @@ export default function BlogPage() {
             >
               اقرأ المزيد ←
             </Link>
+            // أضف هذا داخل الـ return بتاع الصفحة
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+    __html: JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": "UAE VAT Law Changes 2026 Explained",
+      "description": "Learn about the latest FTA updates and VAT invoice rules for 2026.",
+      "author": {
+        "@type": "Organization",
+        "name": "DOCUVAT"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "DOCUVAT",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://www.docuvat.com/logo.png"
+        }
+      },
+      "datePublished": "2026-05-01",
+    }),
+  }}
+/>
           </div>
         ))}
       </div>
