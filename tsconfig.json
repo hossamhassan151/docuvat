@@ -13,11 +13,9 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
-    "baseUrl": ".",   // 👈 دي أهم سطر
     "paths": {
       "@/*": ["./*"]
     },
-
     "plugins": [
       {
         "name": "next"
