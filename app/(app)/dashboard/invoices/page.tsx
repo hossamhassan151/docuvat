@@ -18,13 +18,13 @@ export default function InvoicesPage() {
         description="Create and track invoices easily."
         icon={Receipt}
         action={
-          <Link
-            href="/invoice"
-            className="inline-flex items-center rounded-2xl bg-gradient-to-r from-blue-600 to-emerald-500 px-5 py-3 text-sm font-semibold text-white"
-          >
-            <Plus className="mr-2 h-4 w-4"/>
-            New Invoice
-          </Link>
+         <Link
+  href="/dashboard/document-builder?type=invoice"
+  className="inline-flex items-center rounded-2xl bg-gradient-to-r from-blue-600 to-emerald-500 px-5 py-3 text-sm font-semibold text-white"
+>
+  <Plus className="mr-2 h-4 w-4" />
+  New Invoice
+</Link>
         }
       />
 

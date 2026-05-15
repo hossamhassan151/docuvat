@@ -75,3 +75,15 @@ export async function deleteClient(clientId: string) {
 
   return true;
 }
+// جلب عميل واحد بالتفصيل
+export async function getClientById(clientId: string) {
+  const { data, error } = await supabase
+    .from("clients")
+    .select("*")
+    .eq("id", clientId)
+    .single();
+
+  if (error) throw error;
+
+  return data as Client;
+}

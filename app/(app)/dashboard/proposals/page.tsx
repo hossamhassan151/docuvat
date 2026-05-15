@@ -19,8 +19,9 @@ export default function ProposalsPage() {
         description="Build polished proposals and convert them later into quotations."
         icon={Layers3}
         action={
+          
           <Link
-            href="#"
+            href="/dashboard/document-builder?type=proposal"
             className="inline-flex items-center rounded-2xl bg-gradient-to-r from-blue-600 to-emerald-500 px-5 py-3 text-sm font-semibold text-white"
           >
             <Plus className="mr-2 h-4 w-4"/>

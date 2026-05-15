@@ -19,7 +19,7 @@ export default function QuotationsPage() {
         icon={FileText}
         action={
           <Link
-            href="/quotation"
+            href="/dashboard/quotations/new"
             className="inline-flex items-center rounded-2xl bg-gradient-to-r from-blue-600 to-emerald-500 px-5 py-3 text-sm font-semibold text-white"
           >
             <Plus className="mr-2 h-4 w-4"/>
